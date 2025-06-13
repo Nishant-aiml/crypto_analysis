@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, BarChart, Bar } from 'recharts';
-import { Plus, Trash2, TrendingUp, TrendingDown, DollarSign, Percent } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, DollarSign, Percent, Briefcase } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 
 interface PortfolioItem {
