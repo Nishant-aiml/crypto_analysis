@@ -1,15 +1,32 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: #141413;
+    --foreground: #FAFAF8;
+  }
+  
+  .light {
+    --background: #FAFAF8;
+    --foreground: #141413;
+  }
+  
   body {
     @apply bg-background text-foreground antialiased;
+    background-color: var(--background);
+    color: var(--foreground);
   }
 }
 
 .glass-card {
   @apply bg-secondary bg-opacity-20 backdrop-blur-lg border border-white border-opacity-10 shadow-lg;
+}
+
+.light .glass-card {
+  @apply bg-gray-100 bg-opacity-60 border-gray-300 border-opacity-30;
 }
 
 .crypto-chart {
@@ -27,4 +44,9 @@
 
 .animate-pulse-subtle {
   animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Smooth theme transitions */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
