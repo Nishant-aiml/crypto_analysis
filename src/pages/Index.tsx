@@ -5,6 +5,7 @@ import PortfolioCard from "@/components/PortfolioCard";
 import CryptoList from "@/components/CryptoList";
 import FearGreedIndex from "@/components/FearGreedIndex";
 import ThemeToggle from "@/components/ThemeToggle";
+import Navigation from "@/components/Navigation";
 
 const Index = () => {
   return (
@@ -17,6 +18,8 @@ const Index = () => {
           </div>
           <ThemeToggle />
         </header>
+        
+        <Navigation />
         
         <GlobalMarketStats />
         
