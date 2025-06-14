@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import Navigation from '@/components/Navigation';
 import TrendingCoins from '@/components/analytics/TrendingCoins';
@@ -13,11 +14,11 @@ import CorrelationVolatility from '@/components/analytics/CorrelationVolatility'
 import RiskAssessment from '@/components/analytics/RiskAssessment';
 import FutureOutlook from '@/components/analytics/FutureOutlook';
 import CoinComparisonTool from '@/components/analytics/CoinComparisonTool';
-import MarketMoodRing from '@/components/analytics/MarketMoodRing';
+// import MarketMoodRing from '@/components/analytics/MarketMoodRing'; // Removed
 import WhaleWatch from '@/components/analytics/WhaleWatch';
 import ArbitrageOpportunities from '@/components/analytics/ArbitrageOpportunities';
 import MarketCycleIndicator from '@/components/analytics/MarketCycleIndicator';
-import SeasonalPatterns from '@/components/analytics/SeasonalPatterns';
+// import SeasonalPatterns from '@/components/analytics/SeasonalPatterns'; // Removed
 import SocialMediaMomentum from '@/components/analytics/SocialMediaMomentum';
 
 const fetchAdvancedMarketData = async () => {
@@ -34,8 +35,8 @@ const Analytics = () => {
   const { data: marketData, isLoading, error } = useQuery({
     queryKey: ['advancedMarketData'],
     queryFn: fetchAdvancedMarketData,
-    staleTime: 1000 * 60 * 60, // 1 hour stale time
-    refetchInterval: 1000 * 60 * 90, // 1.5 hours refetch interval
+    staleTime: 1000 * 60 * 60 * 3, // 3 hours stale time
+    refetchInterval: 1000 * 60 * 60 * 4, // 4 hours refetch interval
   });
 
   if (isLoading || !marketData) {
@@ -176,7 +177,7 @@ const Analytics = () => {
             <WhaleWatch />
             <ArbitrageOpportunities />
             <MarketCycleIndicator />
-            <SeasonalPatterns />
+            {/* <SeasonalPatterns /> */} {/* Removed */}
             <FutureOutlook /> {/* Moved here as it's also a predictive outlook */}
           </div>
         </section>
@@ -189,7 +190,7 @@ const Analytics = () => {
           <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Community & Tools</h2> {/* Renamed for clarity */}
           <div className="space-y-8">
             <CoinComparisonTool />
-            <MarketMoodRing />
+            {/* <MarketMoodRing /> */} {/* Removed */}
           </div>
         </section>
 
@@ -199,3 +200,4 @@ const Analytics = () => {
 };
 
 export default Analytics;
+
