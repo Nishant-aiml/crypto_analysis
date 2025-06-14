@@ -1,5 +1,5 @@
 
-import React from 'react'; // Added React for useMemo if needed later
+import React from 'react';
 import Navigation from '@/components/Navigation';
 import TrendingCoins from '@/components/analytics/TrendingCoins';
 import ExchangeAnalysis from '@/components/analytics/ExchangeAnalysis';
@@ -18,6 +18,7 @@ import WhaleWatch from '@/components/analytics/WhaleWatch';
 import ArbitrageOpportunities from '@/components/analytics/ArbitrageOpportunities';
 import MarketCycleIndicator from '@/components/analytics/MarketCycleIndicator';
 import SocialMediaMomentum from '@/components/analytics/SocialMediaMomentum';
+import ErrorBoundary from '@/components/ErrorBoundary'; // Import the new ErrorBoundary
 
 import { useAdvancedMarketData } from '@/hooks/useAdvancedMarketData';
 import { calculateCorrelation, calculateVolatility } from '@/utils/analyticsUtils';
@@ -27,7 +28,7 @@ import { CoinData } from '@/types/crypto';
 const Analytics = () => {
   const { data: marketData, isLoading, error } = useAdvancedMarketData();
 
-  if (isLoading || !marketData) {
+  if (isLoading || !marketData && !error) { // Ensure loading state persists if marketData is undefined and no error
     return (
       <div className="min-h-screen bg-background p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
@@ -49,6 +50,20 @@ const Analytics = () => {
       </div>
     );
   }
+  
+  // Ensure marketData is not null before proceeding
+  if (!marketData) {
+     return (
+      <div className="min-h-screen bg-background p-4 md:p-8">
+        <div className="max-w-7xl mx-auto">
+          <Navigation />
+          <AnalyticsHeader />
+          <div className="text-center py-10 text-yellow-500">No market data available. Please try again later.</div>
+        </div>
+      </div>
+    );
+  }
+
 
   // Data transformations (can be memoized with useMemo if needed)
   const bitcoinPrices = marketData.find((coin: CoinData) => coin.id === 'bitcoin')?.sparkline_in_7d?.price;
@@ -97,10 +112,18 @@ const Analytics = () => {
         <section className="mb-10">
           <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Market Overview</h2>
           <div className="space-y-8">
-            <TrendingCoins />
-            <MarketDominance />
-            <ExchangeAnalysis />
-            <VolumeAnalysis marketData={marketData} isLoading={isLoading} />
+            <ErrorBoundary fallbackMessage="Could not load Trending Coins.">
+              <TrendingCoins />
+            </ErrorBoundary>
+            <ErrorBoundary fallbackMessage="Could not load Market Dominance.">
+              <MarketDominance />
+            </ErrorBoundary>
+            <ErrorBoundary fallbackMessage="Could not load Exchange Analysis.">
+              <ExchangeAnalysis />
+            </ErrorBoundary>
+            <ErrorBoundary fallbackMessage="Could not load Volume Analysis.">
+              <VolumeAnalysis marketData={marketData} />
+            </ErrorBoundary>
           </div>
         </section>
 
@@ -108,28 +131,35 @@ const Analytics = () => {
         <section className="mb-10">
           <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Deep Coin Analysis</h2>
           <div className="space-y-8">
-            <MarketCapVolumeRatio marketData={marketData} />
+            <ErrorBoundary fallbackMessage="Could not load Market Cap/Volume Ratio.">
+              <MarketCapVolumeRatio marketData={marketData} />
+            </ErrorBoundary>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {topCoinsForDetails.map((coin: CoinData) => (
-                <CoinDetailStats 
-                  key={coin.id}
-                  coinId={coin.id} 
-                  coinName={coin.name}
-                  coinSymbol={coin.symbol}
-                  coinImage={coin.image}
-                />
+                <ErrorBoundary key={coin.id} fallbackMessage={`Could not load details for ${coin.name}.`}>
+                  <CoinDetailStats 
+                    coinId={coin.id} 
+                    coinName={coin.name}
+                    coinSymbol={coin.symbol}
+                    coinImage={coin.image}
+                  />
+                </ErrorBoundary>
               ))}
             </div>
             
             {marketData.find((c: CoinData) => c.id === 'bitcoin') && (
-              <CoinLiquidity 
-                coinId="bitcoin" 
-                coinName="Bitcoin"
-                coinSymbol="BTC"
-              />
+              <ErrorBoundary fallbackMessage="Could not load Bitcoin Liquidity.">
+                <CoinLiquidity 
+                  coinId="bitcoin" 
+                  coinName="Bitcoin"
+                  coinSymbol="BTC"
+                />
+              </ErrorBoundary>
             )}
-            <SocialMediaMomentum />
+            <ErrorBoundary fallbackMessage="Could not load Social Media Momentum.">
+              <SocialMediaMomentum />
+            </ErrorBoundary>
           </div>
         </section>
         
@@ -137,13 +167,27 @@ const Analytics = () => {
         <section className="mb-10">
           <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Advanced Metrics & Predictive Insights</h2>
           <div className="space-y-8">
-            <TopPerformers topGainers={topGainers} topLosers={topLosers} />
-            <CorrelationVolatility correlationData={correlationData} volatilityData={volatilityData} />
-            <RiskAssessment riskData={riskAssessmentData} />
-            <WhaleWatch />
-            <ArbitrageOpportunities />
-            <MarketCycleIndicator />
-            <FutureOutlook />
+            <ErrorBoundary fallbackMessage="Could not load Top Performers.">
+              <TopPerformers topGainers={topGainers} topLosers={topLosers} />
+            </ErrorBoundary>
+            <ErrorBoundary fallbackMessage="Could not load Correlation & Volatility.">
+              <CorrelationVolatility correlationData={correlationData} volatilityData={volatilityData} />
+            </ErrorBoundary>
+            <ErrorBoundary fallbackMessage="Could not load Risk Assessment.">
+              <RiskAssessment riskData={riskAssessmentData} />
+            </ErrorBoundary>
+            <ErrorBoundary fallbackMessage="Could not load Whale Watch.">
+              <WhaleWatch />
+            </ErrorBoundary>
+            <ErrorBoundary fallbackMessage="Could not load Arbitrage Opportunities.">
+              <ArbitrageOpportunities />
+            </ErrorBoundary>
+            <ErrorBoundary fallbackMessage="Could not load Market Cycle Indicator.">
+              <MarketCycleIndicator />
+            </ErrorBoundary>
+            <ErrorBoundary fallbackMessage="Could not load Future Outlook.">
+              <FutureOutlook />
+            </ErrorBoundary>
           </div>
         </section>
 
@@ -151,7 +195,9 @@ const Analytics = () => {
         <section className="mb-10">
           <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Community & Tools</h2>
           <div className="space-y-8">
-            <CoinComparisonTool />
+            <ErrorBoundary fallbackMessage="Could not load Coin Comparison Tool.">
+              <CoinComparisonTool />
+            </ErrorBoundary>
           </div>
         </section>
 
@@ -161,4 +207,3 @@ const Analytics = () => {
 };
 
 export default Analytics;
-
