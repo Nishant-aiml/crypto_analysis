@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Scale, BarChart2 } from 'lucide-react';
+import { Scale } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface CoinData {
@@ -23,13 +23,28 @@ interface CoinData {
 
 const fetchCoinData = async (coinIds: string[]): Promise<CoinData[]> => {
   if (coinIds.length === 0) return [];
-  const response = await fetch(
-    `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${coinIds.join(',')}&order=market_cap_desc&per_page=10&page=1&sparkline=false`
-  );
-  if (!response.ok) {
-    throw new Error('Failed to fetch coin data');
+  const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${coinIds.join(',')}&order=market_cap_desc&per_page=10&page=1&sparkline=false`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      let errorText = `Failed to fetch coin data for comparison (IDs: ${coinIds.join(',')}) with status ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorText += `: ${JSON.stringify(errorData)}`;
+      } catch (e) {
+        errorText += ` and failed to parse error response body.`;
+      }
+      console.error(errorText, response);
+      throw new Error(errorText);
+    }
+    return response.json();
+  } catch (error) {
+    console.error(`Network or other error fetching coin data for comparison from ${url}:`, error);
+    if (error instanceof Error) {
+      throw new Error(`Network error fetching coin data for comparison: ${error.message}`);
+    }
+    throw new Error(`Network error fetching coin data for comparison: ${String(error)}`);
   }
-  return response.json();
 };
 
 const CoinComparisonTool: React.FC = () => {
@@ -37,11 +52,11 @@ const CoinComparisonTool: React.FC = () => {
   const [coin2Id, setCoin2Id] = useState<string>('ethereum');
   const [submittedCoinIds, setSubmittedCoinIds] = useState<string[]>(['bitcoin', 'ethereum']);
 
-  const { data: coinData, isLoading, error, refetch } = useQuery<CoinData[]>({
+  const { data: coinData, isLoading, error } = useQuery<CoinData[], Error>({
     queryKey: ['compareCoins', submittedCoinIds],
     queryFn: () => fetchCoinData(submittedCoinIds),
-    enabled: submittedCoinIds.length === 2,
-    staleTime: 1000 * 60 * 10, // Added 10 minutes stale time
+    enabled: submittedCoinIds.length === 2 && submittedCoinIds.every(id => id.trim() !== ''),
+    staleTime: 1000 * 60 * 10,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -56,17 +71,20 @@ const CoinComparisonTool: React.FC = () => {
     return (
       <div className="grid grid-cols-3 py-2 border-b border-border/50 text-sm">
         <div className="col-span-1 text-muted-foreground">{label}</div>
-        <div className="col-span-1 text-center">{value1 !== undefined ? formatter(value1) : 'N/A'}</div>
-        <div className="col-span-1 text-center">{value2 !== undefined ? formatter(value2) : 'N/A'}</div>
+        <div className="col-span-1 text-center">{value1 !== undefined && value1 !== null ? formatter(value1) : 'N/A'}</div>
+        <div className="col-span-1 text-center">{value2 !== undefined && value2 !== null ? formatter(value2) : 'N/A'}</div>
       </div>
     );
   };
   
-  const formatPriceChange = (value: number) => (
-    <span className={value >= 0 ? 'text-green-400' : 'text-red-400'}>
-      {value !== null && value !== undefined ? `${value.toFixed(2)}%` : 'N/A'}
-    </span>
-  );
+  const formatPriceChange = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return 'N/A';
+    return (
+      <span className={value >= 0 ? 'text-green-400' : 'text-red-400'}>
+        {`${value.toFixed(2)}%`}
+      </span>
+    );
+  };
 
   const coin1 = coinData?.find(c => c.id === submittedCoinIds[0]);
   const coin2 = coinData?.find(c => c.id === submittedCoinIds[1]);
@@ -94,7 +112,7 @@ const CoinComparisonTool: React.FC = () => {
           </Button>
         </form>
 
-        {error && <div className="text-red-500 text-center py-4">Error loading coin data. Please ensure IDs are correct.</div>}
+        {error && <div className="text-red-500 text-center py-4">Error: {(error as Error).message}. Please ensure IDs are correct or try again later.</div>}
         
         {!isLoading && !error && coinData && coin1 && coin2 && (
           <div className="space-y-4">
@@ -107,20 +125,20 @@ const CoinComparisonTool: React.FC = () => {
                 <img src={coin2.image} alt={coin2.name} className="w-6 h-6 mr-2" /> {coin2.name} ({coin2.symbol.toUpperCase()})
               </div>
             </div>
-            {renderStat('Current Price', coin1.current_price, coin2.current_price, val => `$${val.toLocaleString()}`)}
-            {renderStat('Market Cap', coin1.market_cap, coin2.market_cap, val => `$${val.toLocaleString()}`)}
+            {renderStat('Current Price', coin1.current_price, coin2.current_price, val => `$${val?.toLocaleString()}`)}
+            {renderStat('Market Cap', coin1.market_cap, coin2.market_cap, val => `$${val?.toLocaleString()}`)}
             {renderStat('Market Cap Rank', coin1.market_cap_rank, coin2.market_cap_rank)}
-            {renderStat('24h Volume', coin1.total_volume, coin2.total_volume, val => `$${val.toLocaleString()}`)}
+            {renderStat('24h Volume', coin1.total_volume, coin2.total_volume, val => `$${val?.toLocaleString()}`)}
             {renderStat('24h Price Change', coin1.price_change_percentage_24h, coin2.price_change_percentage_24h, formatPriceChange)}
-            {renderStat('All-Time High (ATH)', coin1.ath, coin2.ath, val => `$${val.toLocaleString()}`)}
-            {renderStat('All-Time Low (ATL)', coin1.atl, coin2.atl, val => `$${val.toLocaleString()}`)}
-            {renderStat('Circulating Supply', coin1.circulating_supply, coin2.circulating_supply)}
+            {renderStat('All-Time High (ATH)', coin1.ath, coin2.ath, val => `$${val?.toLocaleString()}`)}
+            {renderStat('All-Time Low (ATL)', coin1.atl, coin2.atl, val => `$${val?.toLocaleString()}`)}
+            {renderStat('Circulating Supply', coin1.circulating_supply, coin2.circulating_supply, val => val?.toLocaleString())}
             {renderStat('Total Supply', coin1.total_supply, coin2.total_supply, val => val ? val.toLocaleString() : '∞')}
           </div>
         )}
         {!isLoading && !error && coinData && (!coin1 || !coin2) && submittedCoinIds.length === 2 && (
           <div className="text-center py-4 text-muted-foreground">
-            Could not find data for one or both coins. Please check the IDs.
+            Could not find data for one or both coins ({submittedCoinIds.join(', ')}). Please check the IDs.
           </div>
         )}
       </CardContent>
