@@ -13,20 +13,20 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="glass-card p-4 rounded-lg mb-8">
-      <div className="flex space-x-6">
+    <nav className="glass-card p-3 sm:p-4 rounded-lg mb-8">
+      <div className="flex flex-wrap justify-center gap-x-2 gap-y-2 sm:flex-nowrap sm:justify-start sm:space-x-3 md:space-x-4 lg:space-x-6">
         {navItems.map(({ path, icon: Icon, label }) => (
           <Link
             key={path}
             to={path}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+            className={`flex items-center space-x-1 sm:space-x-2 px-2 py-2 sm:px-3 md:px-4 rounded-lg transition-colors ${
               location.pathname === path
                 ? 'bg-blue-500/20 text-blue-400'
                 : 'hover:bg-secondary/30'
             }`}
           >
-            <Icon className="w-5 h-5" />
-            <span className="font-medium">{label}</span>
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="font-medium text-xs sm:text-sm md:text-base">{label}</span>
           </Link>
         ))}
       </div>

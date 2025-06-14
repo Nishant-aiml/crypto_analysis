@@ -34,13 +34,13 @@ const Portfolio = () => {
   }));
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <Navigation />
         
         <header className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Portfolio Tracker</h1>
-          <p className="text-muted-foreground">Track your cryptocurrency investments and performance</p>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">Portfolio Tracker</h1>
+          <p className="text-muted-foreground text-sm sm:text-base">Track your cryptocurrency investments and performance</p>
         </header>
 
         {/* Portfolio Overview */}
