@@ -1,8 +1,11 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import { TrendingUp, TrendingDown, Activity, AlertTriangle } from 'lucide-react';
 import Navigation from '@/components/Navigation';
+import TrendingCoins from '@/components/analytics/TrendingCoins';
+import ExchangeAnalysis from '@/components/analytics/ExchangeAnalysis';
+import MarketDominance from '@/components/analytics/MarketDominance';
+import VolumeAnalysis from '@/components/analytics/VolumeAnalysis';
 
 const fetchAdvancedMarketData = async () => {
   const response = await fetch(
@@ -80,8 +83,23 @@ const Analytics = () => {
         
         <header className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Advanced Analytics</h1>
-          <p className="text-muted-foreground">Deep market insights and correlation analysis</p>
+          <p className="text-muted-foreground">Comprehensive market intelligence and analysis</p>
         </header>
+
+        {/* New Advanced Features */}
+        <div className="space-y-8 mb-8">
+          {/* Trending Coins */}
+          <TrendingCoins />
+
+          {/* Market Dominance */}
+          <MarketDominance />
+
+          {/* Exchange Analysis */}
+          <ExchangeAnalysis />
+
+          {/* Volume Analysis */}
+          <VolumeAnalysis />
+        </div>
 
         {/* Top Gainers and Losers */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
