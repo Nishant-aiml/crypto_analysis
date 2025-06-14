@@ -1,31 +1,54 @@
-import { useQuery } from '@tanstack/react-query';
+
 import { Activity, AlertTriangle, TrendingUp } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'; // Removed LineChart, Line as they are not used
 
-const fetchMarketData = async () => {
-  const response = await fetch(
-    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=false&price_change_percentage=1h%2C24h%2C7d'
-  );
-  if (!response.ok) throw new Error('Failed to fetch market data');
-  return response.json();
-};
+interface CoinData {
+  id: string;
+  symbol: string;
+  name: string;
+  image: string;
+  current_price: number;
+  market_cap: number;
+  market_cap_rank: number;
+  fully_diluted_valuation: number | null;
+  total_volume: number;
+  high_24h: number;
+  low_24h: number;
+  price_change_24h: number;
+  price_change_percentage_24h: number;
+  market_cap_change_24h: number;
+  market_cap_change_percentage_24h: number;
+  circulating_supply: number;
+  total_supply: number | null;
+  max_supply: number | null;
+  ath: number;
+  ath_change_percentage: number;
+  ath_date: string;
+  atl: number;
+  atl_change_percentage: number;
+  atl_date: string;
+  roi: any | null; // Adjust if ROI structure is known
+  last_updated: string;
+  sparkline_in_7d?: { price: number[] };
+  price_change_percentage_1h_in_currency?: number;
+  price_change_percentage_24h_in_currency?: number;
+  price_change_percentage_7d_in_currency?: number;
+}
 
-const VolumeAnalysis = () => {
-  const { data: marketData, isLoading } = useQuery({
-    queryKey: ['volumeAnalysis'],
-    queryFn: fetchMarketData,
-    refetchInterval: 1000 * 60 * 15, // Increased to 15 minutes
-    staleTime: 1000 * 60 * 10, // Added 10 minutes stale time
-  });
+interface VolumeAnalysisProps {
+  marketData: CoinData[] | undefined;
+  isLoading: boolean;
+}
 
-  if (isLoading) {
+const VolumeAnalysis = ({ marketData, isLoading }: VolumeAnalysisProps) => {
+  if (isLoading || !marketData) {
     return <div className="glass-card p-6 rounded-lg animate-pulse">Loading volume analysis...</div>;
   }
 
   // Calculate volume-to-market-cap ratio and detect anomalies
-  const volumeAnalysisData = marketData?.map((coin: any) => {
-    const volumeToMcapRatio = coin.total_volume / coin.market_cap;
-    const priceChange24h = coin.price_change_percentage_24h;
+  const volumeAnalysisData = marketData.map((coin: CoinData) => {
+    const volumeToMcapRatio = coin.total_volume && coin.market_cap ? coin.total_volume / coin.market_cap : 0;
+    const priceChange24h = coin.price_change_percentage_24h || 0; // Ensure it's a number
     
     return {
       symbol: coin.symbol.toUpperCase(),
@@ -38,7 +61,7 @@ const VolumeAnalysis = () => {
       currentPrice: coin.current_price,
       image: coin.image,
     };
-  }).slice(0, 15) || [];
+  }).slice(0, 15);
 
   // Sort by volume for chart
   const topVolumeCoins = [...volumeAnalysisData]
@@ -126,7 +149,10 @@ const VolumeAnalysis = () => {
                   <img src={coin.image} alt={coin.name} className="w-6 h-6" />
                   <div className="flex-1">
                     <div className="font-medium">{coin.symbol}</div>
-                    <div className="text-sm text-muted-foreground">${coin.currentPrice.toFixed(2)}</div>
+                    {/* Ensure currentPrice exists and is a number before calling toFixed */}
+                    <div className="text-sm text-muted-foreground">
+                      ${typeof coin.currentPrice === 'number' ? coin.currentPrice.toFixed(2) : 'N/A'}
+                    </div>
                   </div>
                   {coin.isAnomaly && <AlertTriangle className="w-4 h-4 text-orange-400" />}
                 </div>
