@@ -11,8 +11,8 @@ const TrendingCoins = () => {
   const { data: trendingData, isLoading } = useQuery({
     queryKey: ['trending'],
     queryFn: fetchTrendingCoins,
-    refetchInterval: 1000 * 60 * 15, // Increased to 15 minutes
-    staleTime: 1000 * 60 * 10, // Added 10 minutes stale time
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchInterval: 1000 * 60 * 90, // 1.5 hours
   });
 
   if (isLoading) {

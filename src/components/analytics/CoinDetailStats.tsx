@@ -32,8 +32,8 @@ const CoinDetailStats: React.FC<CoinDetailStatsProps> = ({ coinId, coinName, coi
   const { data: coinDetails, isLoading, error } = useQuery({
     queryKey: ['coinDetails', coinId],
     queryFn: () => fetchCoinDetails(coinId),
-    staleTime: 1000 * 60 * 10, // Adjusted to 10 minutes
-    refetchInterval: 1000 * 60 * 15, // Added 15 minutes refetch interval
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchInterval: 1000 * 60 * 90, // 1.5 hours
   });
 
   if (isLoading) {

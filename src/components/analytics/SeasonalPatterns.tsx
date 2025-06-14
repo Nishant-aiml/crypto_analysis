@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, BarChartHorizontalBig, TrendingUp, TrendingDown, Info } from 'lucide-react';
@@ -93,7 +92,8 @@ const SeasonalPatterns: React.FC = () => {
   const { data: historicalPrices, isLoading, error } = useQuery<HistoricalPrice[]>({
     queryKey: ['historicalDataSeasonal', TARGET_COIN_ID_SEASONAL],
     queryFn: () => fetchHistoricalData(TARGET_COIN_ID_SEASONAL),
-    staleTime: 1000 * 60 * 60, // 1 hour
+    staleTime: 1000 * 60 * 60 * 6, // 6 hours stale time for historical data
+    refetchInterval: false, // Disable automatic refetching for historical data
   });
 
   const seasonalData = historicalPrices ? calculateSeasonalPatterns(historicalPrices) : [];

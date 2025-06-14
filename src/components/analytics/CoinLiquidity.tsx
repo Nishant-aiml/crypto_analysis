@@ -27,8 +27,8 @@ const CoinLiquidity: React.FC<CoinLiquidityProps> = ({ coinId, coinName, coinSym
   const { data: tickerData, isLoading, error } = useQuery({
     queryKey: ['coinTickers', coinId],
     queryFn: () => fetchCoinTickers(coinId),
-    staleTime: 1000 * 60 * 10, // Increased to 10 minutes
-    refetchInterval: 1000 * 60 * 15, // Added 15 minutes refetch interval
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchInterval: 1000 * 60 * 90, // 1.5 hours
   });
 
   if (isLoading) {

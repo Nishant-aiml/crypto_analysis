@@ -45,8 +45,8 @@ const ArbitrageOpportunities: React.FC = () => {
   const { data, isLoading, error } = useQuery<ArbitrageData>({
     queryKey: ['arbitrageData', TARGET_COIN_ID],
     queryFn: () => fetchArbitrageData(TARGET_COIN_ID),
-    staleTime: 1000 * 60 * 10, // Adjusted to 10 minutes
-    refetchInterval: 1000 * 60 * 15, // Added 15 minutes refetch interval
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchInterval: 1000 * 60 * 90, // 1.5 hours
   });
 
   const arbitrageOpportunities = data?.tickers && data.tickers.length > 1 
@@ -78,7 +78,6 @@ const ArbitrageOpportunities: React.FC = () => {
         .sort((a, b) => b!.percentage - a!.percentage)
         .slice(0, 5) // Show top 5 opportunities
     : [];
-
 
   return (
     <Card className="glass-card">

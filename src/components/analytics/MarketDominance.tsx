@@ -20,15 +20,15 @@ const MarketDominance = () => {
   const { data: globalData, isLoading: globalLoading } = useQuery({
     queryKey: ['globalMarketData'],
     queryFn: fetchGlobalData,
-    refetchInterval: 1000 * 60 * 15, // Increased to 15 minutes
-    staleTime: 1000 * 60 * 10, // Added 10 minutes stale time
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchInterval: 1000 * 60 * 90, // 1.5 hours
   });
 
   const { data: topCoins, isLoading: coinsLoading } = useQuery({
     queryKey: ['topCoinsForDominance'],
     queryFn: fetchTopCoinsForDominance,
-    refetchInterval: 1000 * 60 * 15, // Increased to 15 minutes
-    staleTime: 1000 * 60 * 10, // Added 10 minutes stale time
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchInterval: 1000 * 60 * 90, // 1.5 hours
   });
 
   if (globalLoading || coinsLoading) {

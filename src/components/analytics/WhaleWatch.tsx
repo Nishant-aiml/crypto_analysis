@@ -34,8 +34,8 @@ const WhaleWatch: React.FC = () => {
   const { data: marketData, isLoading, error } = useQuery<WhaleCoin[]>({
     queryKey: ['whaleWatchData'],
     queryFn: fetchMarketDataForWhaleWatch,
-    staleTime: 1000 * 60 * 10, // Adjusted to 10 minutes
-    refetchInterval: 1000 * 60 * 15, // Added 15 minutes refetch interval
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchInterval: 1000 * 60 * 90, // 1.5 hours
   });
 
   // Simplified logic: coins with high volume to market cap ratio (e.g., > 20%)
