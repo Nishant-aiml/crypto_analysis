@@ -1,39 +1,6 @@
-
 import { Activity, AlertTriangle, TrendingUp } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'; // Removed LineChart, Line as they are not used
-
-interface CoinData {
-  id: string;
-  symbol: string;
-  name: string;
-  image: string;
-  current_price: number;
-  market_cap: number;
-  market_cap_rank: number;
-  fully_diluted_valuation: number | null;
-  total_volume: number;
-  high_24h: number;
-  low_24h: number;
-  price_change_24h: number;
-  price_change_percentage_24h: number;
-  market_cap_change_24h: number;
-  market_cap_change_percentage_24h: number;
-  circulating_supply: number;
-  total_supply: number | null;
-  max_supply: number | null;
-  ath: number;
-  ath_change_percentage: number;
-  ath_date: string;
-  atl: number;
-  atl_change_percentage: number;
-  atl_date: string;
-  roi: any | null; // Adjust if ROI structure is known
-  last_updated: string;
-  sparkline_in_7d?: { price: number[] };
-  price_change_percentage_1h_in_currency?: number;
-  price_change_percentage_24h_in_currency?: number;
-  price_change_percentage_7d_in_currency?: number;
-}
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { CoinData } from '@/types/crypto'; // Import the shared CoinData type
 
 interface VolumeAnalysisProps {
   marketData: CoinData[] | undefined;
@@ -149,7 +116,6 @@ const VolumeAnalysis = ({ marketData, isLoading }: VolumeAnalysisProps) => {
                   <img src={coin.image} alt={coin.name} className="w-6 h-6" />
                   <div className="flex-1">
                     <div className="font-medium">{coin.symbol}</div>
-                    {/* Ensure currentPrice exists and is a number before calling toFixed */}
                     <div className="text-sm text-muted-foreground">
                       ${typeof coin.currentPrice === 'number' ? coin.currentPrice.toFixed(2) : 'N/A'}
                     </div>
