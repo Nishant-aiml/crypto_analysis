@@ -1,5 +1,6 @@
 
 import { Ratio } from 'lucide-react';
+import React from 'react'; // Ensure React is imported for FC
 
 interface MarketCapVolumeRatioProps {
   marketData: any[];
@@ -29,7 +30,7 @@ const MarketCapVolumeRatio: React.FC<MarketCapVolumeRatioProps> = ({ marketData 
       volume,
       ratio,
     };
-  }).sort((a, b) => (a.ratio ?? Infinity) - (b.ratio ?? Infinity)); // Sort by ratio, nulls last or first depending on preference
+  }).sort((a, b) => (a.ratio ?? Infinity) - (b.ratio ?? Infinity));
 
   return (
     <div className="glass-card p-6 rounded-lg">

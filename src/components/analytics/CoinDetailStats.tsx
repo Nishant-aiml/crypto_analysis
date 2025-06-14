@@ -1,6 +1,6 @@
 
 import { useQuery } from '@tanstack/react-query';
-import { Github, Twitter, Reddit, Users, GitFork, Star, MessageSquare, GitPullRequest } from 'lucide-react';
+import { Github, Twitter, Users, GitFork, Star, MessageSquare, GitPullRequest } from 'lucide-react'; // Removed Reddit, MessageSquare is already here
 
 interface CoinDetailStatsProps {
   coinId: string;
@@ -65,7 +65,7 @@ const CoinDetailStats: React.FC<CoinDetailStatsProps> = ({ coinId, coinName, coi
         
         {/* Community Stats */}
         <StatCard icon={Twitter} label="Twitter Followers" value={communityData?.twitter_followers} />
-        <StatCard icon={Reddit} label="Reddit Subs" value={communityData?.reddit_subscribers} />
+        <StatCard icon={MessageSquare} label="Reddit Subs" value={communityData?.reddit_subscribers} /> {/* Changed icon to MessageSquare */}
       </div>
     </div>
   );
