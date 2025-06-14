@@ -18,6 +18,7 @@ import WhaleWatch from '@/components/analytics/WhaleWatch';
 import ArbitrageOpportunities from '@/components/analytics/ArbitrageOpportunities';
 import MarketCycleIndicator from '@/components/analytics/MarketCycleIndicator';
 import SeasonalPatterns from '@/components/analytics/SeasonalPatterns';
+import SocialMediaMomentum from '@/components/analytics/SocialMediaMomentum';
 
 const fetchAdvancedMarketData = async () => {
   const response = await fetch(
@@ -160,6 +161,7 @@ const Analytics = () => {
                 coinSymbol="BTC"
               />
             )}
+            <SocialMediaMomentum />
           </div>
         </section>
         
