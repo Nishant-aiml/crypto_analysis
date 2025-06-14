@@ -1,6 +1,6 @@
-
 import { useQuery } from '@tanstack/react-query';
-import { CoinData } from '@/types/crypto'; // Assuming CoinData is comprehensive enough
+import { CoinData } from '@/types/crypto';
+import { toast } from 'sonner';
 
 // Define types for the data we'll fetch
 interface TrendingCoinItem {
@@ -52,8 +52,9 @@ const fetchAdvancedMarketData = async (): Promise<CoinData[]> => {
     'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=true&price_change_percentage=1h%2C24h%2C7d'
   );
   if (!response.ok) {
-    console.error('Failed to fetch advanced market data', response.status, await response.text().catch(() => ''));
-    throw new Error('Failed to fetch advanced market data');
+    const errorText = await response.text().catch(() => 'Failed to read error response');
+    console.error('Failed to fetch advanced market data', response.status, errorText);
+    throw new Error(`Failed to fetch advanced market data (status ${response.status})`);
   }
   return response.json();
 };
@@ -61,8 +62,9 @@ const fetchAdvancedMarketData = async (): Promise<CoinData[]> => {
 const fetchTrendingCoins = async (): Promise<TrendingData> => {
   const response = await fetch('https://api.coingecko.com/api/v3/search/trending');
   if (!response.ok) {
-    console.error('Failed to fetch trending data', response.status, await response.text().catch(() => ''));
-    throw new Error('Failed to fetch trending data');
+    const errorText = await response.text().catch(() => 'Failed to read error response');
+    console.error('Failed to fetch trending data', response.status, errorText);
+    throw new Error(`Failed to fetch trending data (status ${response.status})`);
   }
   return response.json();
 };
@@ -70,8 +72,9 @@ const fetchTrendingCoins = async (): Promise<TrendingData> => {
 const fetchExchanges = async (): Promise<Exchange[]> => {
   const response = await fetch('https://api.coingecko.com/api/v3/exchanges?per_page=10');
   if (!response.ok) {
-    console.error('Failed to fetch exchange data', response.status, await response.text().catch(() => ''));
-    throw new Error('Failed to fetch exchange data');
+    const errorText = await response.text().catch(() => 'Failed to read error response');
+    console.error('Failed to fetch exchange data', response.status, errorText);
+    throw new Error(`Failed to fetch exchange data (status ${response.status})`);
   }
   return response.json();
 };
@@ -80,44 +83,54 @@ export const useAnalyticsData = () => {
   const { 
     data: marketData, 
     isLoading: isLoadingMarketData, 
-    error: marketDataError 
+    error: marketDataErrorRaw 
   } = useQuery<CoinData[], Error>({
     queryKey: ['advancedMarketData'], // Keep key consistent if data structure is the same
     queryFn: fetchAdvancedMarketData,
     staleTime: 1000 * 60 * 5, // 5 minutes stale time
     refetchInterval: 1000 * 60 * 10, // 10 minutes refetch interval
+    onError: (err: Error) => {
+      toast.error(`Market Data Error: ${err.message}`);
+    }
   });
 
   const { 
     data: trendingData, 
     isLoading: isLoadingTrendingCoins, 
-    error: trendingCoinsError 
+    error: trendingCoinsErrorRaw 
   } = useQuery<TrendingData, Error>({
     queryKey: ['trendingCoinsAnalytics'], // Use a distinct key
     queryFn: fetchTrendingCoins,
     staleTime: 1000 * 60 * 60, // 1 hour
     refetchInterval: 1000 * 60 * 90, // 1.5 hours
+    onError: (err: Error) => {
+      toast.error(`Trending Coins Error: ${err.message}`);
+    }
   });
 
   const { 
     data: exchanges, 
     isLoading: isLoadingExchanges, 
-    error: exchangesError 
+    error: exchangesErrorRaw 
   } = useQuery<Exchange[], Error>({
     queryKey: ['exchangesAnalytics'], // Use a distinct key
     queryFn: fetchExchanges,
     staleTime: 1000 * 60 * 60, // 1 hour
     refetchInterval: 1000 * 60 * 90, // 1.5 hours
+    onError: (err: Error) => {
+      toast.error(`Exchanges Data Error: ${err.message}`);
+    }
   });
 
   const isLoading = isLoadingMarketData || isLoadingTrendingCoins || isLoadingExchanges;
   
   const errors: AnalyticsDataError = {};
-  if (marketDataError) errors.marketDataError = marketDataError;
-  if (trendingCoinsError) errors.trendingCoinsError = trendingCoinsError;
-  if (exchangesError) errors.exchangesError = exchangesError;
+  if (marketDataErrorRaw) errors.marketDataError = marketDataErrorRaw;
+  if (trendingCoinsErrorRaw) errors.trendingCoinsError = trendingCoinsErrorRaw;
+  if (exchangesErrorRaw) errors.exchangesError = exchangesErrorRaw;
   
-  const overallError = marketDataError || trendingCoinsError || exchangesError;
+  // Consolidate overall error for the page, prioritizing market data error
+  const overallError = marketDataErrorRaw || trendingCoinsErrorRaw || exchangesErrorRaw;
 
   return {
     data: {
@@ -130,4 +143,3 @@ export const useAnalyticsData = () => {
     errors, // This provides specific errors for partial data rendering
   };
 };
-
