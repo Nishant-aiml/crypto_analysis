@@ -1,3 +1,4 @@
+
 import { useQuery } from '@tanstack/react-query';
 import Navigation from '@/components/Navigation';
 import TrendingCoins from '@/components/analytics/TrendingCoins';
@@ -125,9 +126,9 @@ const Analytics = () => {
           <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Market Overview</h2>
           <div className="space-y-8">
             <TrendingCoins />
-            <MarketDominance />
+            <MarketDominance /> {/* Removed marketData prop */}
             <ExchangeAnalysis />
-            <VolumeAnalysis />
+            <VolumeAnalysis /> {/* Removed marketData prop */}
           </div>
         </section>
 
@@ -169,3 +170,4 @@ const Analytics = () => {
 };
 
 export default Analytics;
+
