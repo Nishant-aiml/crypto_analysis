@@ -1,6 +1,7 @@
+
 import React from 'react';
 import TrendingCoins from '@/components/analytics/TrendingCoins';
-import MarketDominance from '@/components/analytics/MarketDominance';
+import MarketDominance from '@/components/analytics/MarketDominance'; // Read-only
 import ExchangeAnalysis from '@/components/analytics/ExchangeAnalysis';
 import VolumeAnalysis from '@/components/analytics/VolumeAnalysis';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -26,21 +27,21 @@ interface Exchange {
   image: string;
   trust_score: number;
   trade_volume_24h_btc: number;
-  // Add other fields if used by ExchangeAnalysis from the original type in useAnalyticsData
 }
 
-interface AnalyticsDataError { // Simplified from useAnalyticsData hook's error structure
+interface AnalyticsDataError { 
   marketDataError?: Error | null;
   trendingCoinsError?: Error | null;
   exchangesError?: Error | null;
 }
 
+
 interface MarketOverviewSectionProps {
   trendingCoins?: TrendingCoinItem[];
   exchanges?: Exchange[];
   marketData?: CoinData[];
-  isLoadingGlobal: boolean; // Overall loading state for the analytics page
-  errors: AnalyticsDataError;
+  isLoadingGlobal: boolean;
+  errors: AnalyticsDataError; // Expecting the specific errors object
   marketDataUnavailable: boolean;
 }
 
@@ -49,7 +50,7 @@ const MarketOverviewSection: React.FC<MarketOverviewSectionProps> = ({
   exchanges,
   marketData,
   isLoadingGlobal,
-  errors,
+  errors, // Use the specific errors object
   marketDataUnavailable,
 }) => {
   return (
@@ -59,30 +60,31 @@ const MarketOverviewSection: React.FC<MarketOverviewSectionProps> = ({
         <ErrorBoundary fallbackMessage="Could not load Trending Coins.">
           <TrendingCoins 
             trendingCoins={trendingCoins} 
-            isLoading={isLoadingGlobal && !trendingCoins} // Pass loading state specific to this component's data
-            error={errors.trendingCoinsError} 
+            isLoading={isLoadingGlobal && !trendingCoins && !errors.trendingCoinsError} // Loading if global is loading AND no data AND no specific error yet
+            error={errors.trendingCoinsError} // Pass specific error for trending coins
           />
         </ErrorBoundary>
-        <ErrorBoundary fallbackMessage="Could not load Market Dominance.">
-          {/* MarketDominance fetches its own data and is read-only */}
+        <ErrorBoundary fallbackMessage="Could not load Market Dominance. (This component is read-only and fetches its own data)">
           <MarketDominance /> 
         </ErrorBoundary>
         <ErrorBoundary fallbackMessage="Could not load Exchange Analysis.">
           <ExchangeAnalysis 
             exchanges={exchanges} 
-            isLoading={isLoadingGlobal && !exchanges} 
-            error={errors.exchangesError} 
+            isLoading={isLoadingGlobal && !exchanges && !errors.exchangesError}
+            error={errors.exchangesError} // Pass specific error for exchanges
           />
         </ErrorBoundary>
+        {/* For VolumeAnalysis, rely on marketDataError from the 'errors' object */}
         {marketDataUnavailable && !isLoadingGlobal ? (
           <div className="glass-card p-6 rounded-lg text-yellow-500 text-center">
-            Volume Analysis data is currently unavailable. {errors.marketDataError?.message}
+            Volume Analysis data is currently unavailable. {errors.marketDataError?.message || "Market data could not be loaded."}
           </div>
         ) : (
           <ErrorBoundary fallbackMessage="Could not load Volume Analysis.">
             <VolumeAnalysis 
               marketData={marketData || []} 
-              isLoading={isLoadingGlobal && !marketData} // Pass loading specific to marketData
+              isLoading={isLoadingGlobal && !marketData && !errors.marketDataError}
+              // VolumeAnalysis doesn't have its own error prop, it handles errors based on marketData availability
             />
           </ErrorBoundary>
         )}
@@ -92,3 +94,4 @@ const MarketOverviewSection: React.FC<MarketOverviewSectionProps> = ({
 };
 
 export default MarketOverviewSection;
+

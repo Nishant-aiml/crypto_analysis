@@ -1,16 +1,15 @@
-
-import { TrendingUp, Search } from 'lucide-react'; // Removed Users as it's not used
+import { TrendingUp, Search, AlertTriangle } from 'lucide-react'; // Added AlertTriangle
 
 // Define type for individual trending coin item, consistent with useAnalyticsData
 interface TrendingCoinItem {
   item: {
     id: string;
-    coin_id: number; // Keep if needed, otherwise remove
+    coin_id: number; 
     name: string;
     symbol: string;
     market_cap_rank: number;
     thumb: string;
-    score: number; // Keep if needed
+    score: number; 
   };
 }
 
@@ -26,11 +25,19 @@ const TrendingCoins: React.FC<TrendingCoinsProps> = ({ trendingCoins, isLoading,
   }
 
   if (error) {
-    return <div className="glass-card p-6 rounded-lg text-red-400">Error loading trending coins: {error.message}</div>;
+    // Toast should be handled by useAnalyticsData hook. This is for inline display.
+    return (
+      <div className="glass-card p-6 rounded-lg text-red-400 text-center">
+        <AlertTriangle className="w-6 h-6 mx-auto mb-2" />
+        Error loading trending coins.
+        <p className="text-xs mt-1">{error.message}</p>
+        <p className="text-xs mt-1">See toast notifications for more details or try refreshing.</p>
+      </div>
+    );
   }
   
   if (!trendingCoins || trendingCoins.length === 0) {
-    return <div className="glass-card p-6 rounded-lg text-muted-foreground">No trending coins data available.</div>;
+    return <div className="glass-card p-6 rounded-lg text-muted-foreground text-center">No trending coins data available. This could be temporary or due to an earlier data loading issue.</div>;
   }
 
   return (
@@ -62,4 +69,3 @@ const TrendingCoins: React.FC<TrendingCoinsProps> = ({ trendingCoins, isLoading,
 };
 
 export default TrendingCoins;
-

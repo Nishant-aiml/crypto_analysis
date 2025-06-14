@@ -1,36 +1,29 @@
 import { ArrowUpIcon, TrendingUpIcon, ActivityIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 const fetchGlobalData = async () => {
   const url = 'https://api.coingecko.com/api/v3/global';
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      let errorText = `Failed to fetch global data with status ${response.status}`;
-      try {
-        const errorData = await response.json();
-        errorText += `: ${JSON.stringify(errorData)}`;
-      } catch (e) {
-        errorText += ` and failed to parse error response body.`;
-      }
-      console.error(errorText, response);
-      throw new Error(errorText);
-    }
-    return response.json();
-  } catch (error) {
-    console.error(`Network or other error fetching global data from ${url}:`, error);
-    if (error instanceof Error) {
-      throw new Error(`Network error fetching global data: ${error.message}`);
-    }
-    throw new Error(`Network error fetching global data: ${String(error)}`);
+  const response = await fetch(url);
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => `Failed to read error response body (status ${response.status})`);
+    console.error(`Failed to fetch global data from ${url} with status ${response.status}: ${errorText}`, response);
+    throw new Error(`Failed to fetch global market data. Status: ${response.status}. Message: ${errorText}`);
   }
+  return response.json();
 };
 
 const GlobalMarketStats = () => {
-  const { data: globalData, isLoading, error } = useQuery({
-    queryKey: ['globalMarketData'],
+  const { data: globalDataResponse, isLoading, error } = useQuery({
+    queryKey: ['globalMarketStatsData'],
     queryFn: fetchGlobalData,
     refetchInterval: 60000,
+    staleTime: 30000,
+    meta: {
+      onError: (err: Error) => {
+        toast.error(`Global Stats Error: ${err.message}`);
+      }
+    }
   });
 
   if (isLoading) {
@@ -58,7 +51,7 @@ const GlobalMarketStats = () => {
     );
   }
 
-  const data = globalData?.data;
+  const data = globalDataResponse?.data;
   const marketCap = data?.total_market_cap?.usd;
   const volume = data?.total_volume?.usd;
   const btcDominance = data?.market_cap_percentage?.btc;

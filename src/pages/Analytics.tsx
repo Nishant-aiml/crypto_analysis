@@ -1,22 +1,15 @@
-
-import React, { lazy, Suspense } from 'react'; // Import lazy and Suspense
+import React, { lazy, Suspense } from 'react';
 import Navigation from '@/components/Navigation';
 import AnalyticsHeader from '@/components/analytics/AnalyticsHeader';
-// Import new section components - will be lazy loaded
-// import MarketOverviewSection from '@/components/analytics/sections/MarketOverviewSection';
-// import DeepCoinAnalysisSection from '@/components/analytics/sections/DeepCoinAnalysisSection';
-// import AdvancedMetricsSection from '@/components/analytics/sections/AdvancedMetricsSection';
-// import CommunityToolsSection from '@/components/analytics/sections/CommunityToolsSection';
-
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { calculateCorrelation, calculateVolatility } from '@/utils/analyticsUtils';
 import { CoinData } from '@/types/crypto';
 import { WhaleActivityCoin } from '@/components/analytics/WhaleWatch';
-import { Button } from '@/components/ui/button'; // For refresh button
-import { RefreshCw } from 'lucide-react'; // Icon for refresh button
-import { useQueryClient } from '@tanstack/react-query'; // To invalidate queries
-import { toast } from 'sonner'; // For refresh toast
-import { Skeleton } from '@/components/ui/skeleton'; // For Suspense fallback
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Lazy load section components
 const MarketOverviewSection = lazy(() => import('@/components/analytics/sections/MarketOverviewSection'));
@@ -50,15 +43,20 @@ const SectionFallback = ({ title }: { title: string }) => (
 
 const Analytics = () => {
   const queryClient = useQueryClient();
-  const { data: analyticsPageData, isLoading, error, errors } = useAnalyticsData();
+  const { data: analyticsPageData, isLoading, errors } = useAnalyticsData(); // Use specific 'errors' object
   const { marketData, trendingCoins, exchanges } = analyticsPageData || {};
 
   const handleRefresh = () => {
     toast.info("Refreshing analytics data...", { id: "analytics-refresh" });
+    // Invalidate all queries managed by useAnalyticsData
     queryClient.invalidateQueries({ queryKey: ['advancedMarketData'] });
     queryClient.invalidateQueries({ queryKey: ['trendingCoinsAnalytics'] });
     queryClient.invalidateQueries({ queryKey: ['exchangesAnalytics'] });
+    // Add any other relevant query keys here if new ones are added to useAnalyticsData
   };
+  
+  // Check for critical marketData error specifically for the main page structure
+  const criticalMarketDataError = errors?.marketDataError && !marketData;
 
   if (isLoading && !analyticsPageData?.marketData && !analyticsPageData?.trendingCoins && !analyticsPageData?.exchanges) {
     return (
@@ -78,9 +76,7 @@ const Analytics = () => {
     );
   }
   
-  // Critical error: if marketData (most crucial) fails to load, show a prominent error.
-  // Toasts will also show for individual API failures.
-  if (error && !marketData) { 
+  if (criticalMarketDataError) { 
      return (
       <div className="min-h-screen bg-background p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
@@ -92,7 +88,11 @@ const Analytics = () => {
               Refresh Data
             </Button>
           </div>
-          <div className="text-center py-10 text-red-500">Error loading critical analytics data: {(error as Error).message}. Some features might be unavailable. Please try refreshing.</div>
+          <div className="text-center py-10 text-red-500">
+            Error loading critical market data: {(errors.marketDataError as Error).message}. 
+            Some features might be unavailable. Please try refreshing.
+            Individual component errors may also appear below or as toasts.
+          </div>
         </div>
       </div>
     );
@@ -146,7 +146,6 @@ const Analytics = () => {
     .sort((a, b) => (b.volume_to_market_cap_ratio) - (a.volume_to_market_cap_ratio))
     .slice(0, 10);
 
-
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -159,13 +158,14 @@ const Analytics = () => {
           </Button>
         </div>
         
+        {/* Pass the specific errors object to sections */}
         <Suspense fallback={<SectionFallback title="Market Overview" />}>
           <MarketOverviewSection
             trendingCoins={trendingCoins}
             exchanges={exchanges}
             marketData={marketData}
-            isLoadingGlobal={isLoading} // Use the main isLoading from useAnalyticsData
-            errors={errors}
+            isLoadingGlobal={isLoading}
+            errors={errors} // Pass the whole errors object
             marketDataUnavailable={marketDataUnavailable}
           />
         </Suspense>
@@ -175,7 +175,7 @@ const Analytics = () => {
             marketData={marketData}
             topCoinsForDetails={topCoinsForDetails}
             isLoadingGlobal={isLoading}
-            errors={errors}
+            errors={errors} // Pass the whole errors object
             marketDataUnavailable={marketDataUnavailable}
           />
         </Suspense>
@@ -190,7 +190,7 @@ const Analytics = () => {
             riskAssessmentData={riskAssessmentData}
             potentialWhaleActivity={potentialWhaleActivity}
             isLoadingGlobal={isLoading}
-            errors={errors}
+            errors={errors} // Pass the whole errors object
             marketDataUnavailable={marketDataUnavailable}
           />
         </Suspense>

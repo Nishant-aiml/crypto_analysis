@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Droplets, ExternalLink, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CoinLiquidityProps {
   coinId: string;
@@ -9,27 +10,13 @@ interface CoinLiquidityProps {
 
 const fetchCoinTickers = async (coinId: string) => {
   const url = `https://api.coingecko.com/api/v3/coins/${coinId}/tickers?page=1&order=volume_desc&depth=true`;
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      let errorText = `Failed to fetch tickers for ${coinId} with status ${response.status}`;
-      try {
-        const errorData = await response.json();
-        errorText += `: ${JSON.stringify(errorData)}`;
-      } catch (e) {
-        errorText += ` and failed to parse error response body.`;
-      }
-      console.error(errorText, response);
-      throw new Error(errorText);
-    }
-    return response.json();
-  } catch (error) {
-    console.error(`Network or other error fetching tickers for ${coinId} from ${url}:`, error);
-    if (error instanceof Error) {
-      throw new Error(`Network error fetching tickers for ${coinId}: ${error.message}`);
-    }
-    throw new Error(`Network error fetching tickers for ${coinId}: ${String(error)}`);
+  const response = await fetch(url);
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => `Failed to read error response body (status ${response.status}) for ${coinId} tickers`);
+    console.error(`Failed to fetch tickers for ${coinId} from ${url} with status ${response.status}: ${errorText}`, response);
+    throw new Error(`Failed to fetch tickers for ${coinId}. Status: ${response.status}. Message: ${errorText}`);
   }
+  return response.json();
 };
 
 const TrustScoreIndicator: React.FC<{ score: string | null }> = ({ score }) => {
@@ -44,8 +31,13 @@ const CoinLiquidity: React.FC<CoinLiquidityProps> = ({ coinId, coinName, coinSym
   const { data: tickerData, isLoading, error } = useQuery<any, Error>({
     queryKey: ['coinTickers', coinId],
     queryFn: () => fetchCoinTickers(coinId),
-    staleTime: 1000 * 60 * 60, 
-    refetchInterval: 1000 * 60 * 90, 
+    staleTime: 1000 * 60 * 30, 
+    refetchInterval: 1000 * 60 * 45, 
+    meta: {
+      onError: (err: Error) => {
+        toast.error(`Error fetching ${coinName} liquidity: ${err.message}`);
+      }
+    }
   });
 
   if (isLoading) {
@@ -56,7 +48,7 @@ const CoinLiquidity: React.FC<CoinLiquidityProps> = ({ coinId, coinName, coinSym
       <div className="glass-card p-6 rounded-lg text-red-400 text-center">
         <AlertTriangle className="w-6 h-6 mx-auto mb-2" />
         <p>Error loading {coinName} liquidity.</p>
-        <p className="text-xs mt-1">{(error as Error).message}</p>
+        <p className="text-xs mt-1">See toast for more info or try refreshing.</p>
       </div>
     );
   }

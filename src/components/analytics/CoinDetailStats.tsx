@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Github, Twitter, Users, GitFork, Star, MessageSquare, GitPullRequest } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CoinDetailStatsProps {
   coinId: string;
@@ -10,27 +11,13 @@ interface CoinDetailStatsProps {
 
 const fetchCoinDetails = async (coinId: string) => {
   const url = `https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true&sparkline=false`;
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      let errorText = `Failed to fetch details for ${coinId} with status ${response.status}`;
-      try {
-        const errorData = await response.json();
-        errorText += `: ${JSON.stringify(errorData)}`;
-      } catch (e) {
-        errorText += ` and failed to parse error response body.`;
-      }
-      console.error(errorText, response);
-      throw new Error(errorText);
-    }
-    return response.json();
-  } catch (error) {
-    console.error(`Network or other error fetching details for ${coinId} from ${url}:`, error);
-    if (error instanceof Error) {
-      throw new Error(`Network error fetching details for ${coinId}: ${error.message}`);
-    }
-    throw new Error(`Network error fetching details for ${coinId}: ${String(error)}`);
+  const response = await fetch(url);
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => `Failed to read error response body (status ${response.status}) for ${coinId}`);
+    console.error(`Failed to fetch details for ${coinId} from ${url} with status ${response.status}: ${errorText}`, response);
+    throw new Error(`Failed to fetch details for ${coinId}. Status: ${response.status}. Message: ${errorText}`);
   }
+  return response.json();
 };
 
 const StatCard: React.FC<{ icon: React.ElementType; label: string; value: string | number | undefined; unit?: string }> = ({ icon: Icon, label, value, unit }) => (
@@ -49,15 +36,21 @@ const CoinDetailStats: React.FC<CoinDetailStatsProps> = ({ coinId, coinName, coi
   const { data: coinDetails, isLoading, error } = useQuery<any, Error>({
     queryKey: ['coinDetails', coinId],
     queryFn: () => fetchCoinDetails(coinId),
-    staleTime: 1000 * 60 * 60, 
-    refetchInterval: 1000 * 60 * 90, 
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchInterval: 1000 * 60 * 90, // 1.5 hours
+    meta: {
+      onError: (err: Error) => {
+        toast.error(`Error fetching ${coinName} details: ${err.message}`);
+      }
+    }
   });
 
   if (isLoading) {
     return <div className="p-3 bg-secondary/20 rounded-lg animate-pulse">Loading {coinName} details...</div>;
   }
   if (error) {
-    return <div className="p-3 bg-secondary/20 rounded-lg text-red-400">Error loading {coinName} details: {(error as Error).message}.</div>;
+    // Toast notification is handled by useQuery's meta.onError
+    return <div className="p-3 bg-secondary/20 rounded-lg text-red-400">Error loading {coinName} details. See toast for more info or try refreshing.</div>;
   }
 
   const devData = coinDetails?.developer_data;

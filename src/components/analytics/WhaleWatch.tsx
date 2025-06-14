@@ -1,23 +1,18 @@
 
 import React from 'react';
-import { Waves } from 'lucide-react'; // Removed TrendingUp, DollarSign
+import { Waves } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CoinData } from '@/types/crypto'; // Re-using CoinData for type consistency
+import { CoinData } from '@/types/crypto';
 
-// This type should align with what Analytics.tsx prepares for potentialWhaleActivity
-// It's derived from CoinData but might be slightly different after filtering/sorting in Analytics.tsx
-// For simplicity, we can assume it's still CoinData or a subset.
-// Let's make a specific type for clarity.
 export interface WhaleActivityCoin extends CoinData {
-  volume_to_market_cap_ratio: number; // This was calculated in the original WhaleWatch
+  volume_to_market_cap_ratio: number;
 }
-
 
 interface WhaleWatchProps {
   potentialWhaleActivity: WhaleActivityCoin[];
-  isLoading: boolean;
-  error?: Error | null;
+  isLoading: boolean; // This isLoading refers to the data processing in Analytics.tsx and its source (marketData)
+  error?: Error | null; // This error refers to issues fetching/processing the source marketData
 }
 
 const WhaleWatch: React.FC<WhaleWatchProps> = ({ potentialWhaleActivity, isLoading, error }) => {
@@ -31,9 +26,13 @@ const WhaleWatch: React.FC<WhaleWatchProps> = ({ potentialWhaleActivity, isLoadi
       </CardHeader>
       <CardContent>
         {isLoading && <p>Loading whale watch data...</p>}
-        {error && <p className="text-red-500">Error loading data: {error.message}</p>}
+        {error && (
+          <p className="text-red-500">
+            Error loading data for Whale Watch: {error.message}. This might be due to issues fetching underlying market data.
+          </p>
+        )}
         {!isLoading && !error && (!potentialWhaleActivity || potentialWhaleActivity.length === 0) && (
-          <p className="text-muted-foreground">No significant unusual volume activity detected based on current criteria.</p>
+          <p className="text-muted-foreground">No significant unusual volume activity detected based on current criteria, or source data is unavailable.</p>
         )}
         {!isLoading && !error && potentialWhaleActivity && potentialWhaleActivity.length > 0 && (
           <>
@@ -62,8 +61,7 @@ const WhaleWatch: React.FC<WhaleWatchProps> = ({ potentialWhaleActivity, isLoadi
                     <TableCell className="text-right">${coin.current_price.toLocaleString()}</TableCell>
                     <TableCell className="text-right">${coin.total_volume.toLocaleString()}</TableCell>
                     <TableCell className="text-right">
-                      {/* Calculate ratio here if not passed, or ensure it's passed */}
-                      {coin.market_cap > 0 ? ((coin.total_volume / coin.market_cap) * 100).toFixed(2) : 'N/A'}%
+                      {coin.volume_to_market_cap_ratio.toFixed(2)}%
                     </TableCell>
                     <TableCell className={`text-right ${coin.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                       {coin.price_change_percentage_24h?.toFixed(2) ?? '0.00'}%

@@ -4,9 +4,9 @@ import TopPerformers from '@/components/analytics/TopPerformers';
 import CorrelationVolatility from '@/components/analytics/CorrelationVolatility';
 import RiskAssessment from '@/components/analytics/RiskAssessment';
 import WhaleWatch, { WhaleActivityCoin } from '@/components/analytics/WhaleWatch';
-import ArbitrageOpportunities from '@/components/analytics/ArbitrageOpportunities';
-import MarketCycleIndicator from '@/components/analytics/MarketCycleIndicator';
-import FutureOutlook from '@/components/analytics/FutureOutlook';
+import ArbitrageOpportunities from '@/components/analytics/ArbitrageOpportunities'; // Read-only
+import MarketCycleIndicator from '@/components/analytics/MarketCycleIndicator'; // Read-only
+import FutureOutlook from '@/components/analytics/FutureOutlook'; // Read-only
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { CoinData } from '@/types/crypto';
 
@@ -24,8 +24,9 @@ interface RiskAssessmentItem {
 }
 interface AnalyticsDataError { marketDataError?: Error | null; }
 
+
 interface AdvancedMetricsSectionProps {
-  marketData?: CoinData[]; // For components that might still need raw market data
+  marketData?: CoinData[];
   correlationData: CorrelationData[];
   volatilityData: VolatilityData[];
   topGainers: CoinData[];
@@ -33,11 +34,12 @@ interface AdvancedMetricsSectionProps {
   riskAssessmentData: RiskAssessmentItem[];
   potentialWhaleActivity?: WhaleActivityCoin[];
   isLoadingGlobal: boolean;
-  errors: AnalyticsDataError;
+  errors: AnalyticsDataError; // Expecting the specific errors object
   marketDataUnavailable: boolean;
 }
 
 const AdvancedMetricsSection: React.FC<AdvancedMetricsSectionProps> = ({
+  // marketData, // marketData is used to derive other props, direct use might be minimal
   correlationData,
   volatilityData,
   topGainers,
@@ -45,15 +47,17 @@ const AdvancedMetricsSection: React.FC<AdvancedMetricsSectionProps> = ({
   riskAssessmentData,
   potentialWhaleActivity,
   isLoadingGlobal,
-  errors,
+  errors, // Use the specific errors object
   marketDataUnavailable,
 }) => {
+  // This section heavily relies on derivations from marketData.
+  // If marketData failed, most components here will show empty/error states.
   if (marketDataUnavailable && !isLoadingGlobal) {
     return (
       <section className="mb-10">
         <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Advanced Metrics & Predictive Insights</h2>
         <div className="glass-card p-6 rounded-lg text-yellow-500 text-center">
-          Advanced Metrics & Predictive Insights data is currently unavailable. {errors.marketDataError?.message}
+          Advanced Metrics & Predictive Insights data is currently unavailable. {errors.marketDataError?.message || "Market data could not be loaded."}
         </div>
       </section>
     );
@@ -64,9 +68,12 @@ const AdvancedMetricsSection: React.FC<AdvancedMetricsSectionProps> = ({
       <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Advanced Metrics & Predictive Insights</h2>
       <div className="space-y-8">
         <ErrorBoundary fallbackMessage="Could not load Top Performers.">
+          {/* TopPerformers relies on topGainers/topLosers derived from marketData.
+              If marketDataError, these arrays will be empty. */}
           <TopPerformers topGainers={topGainers} topLosers={topLosers} />
         </ErrorBoundary>
         <ErrorBoundary fallbackMessage="Could not load Correlation & Volatility.">
+          {/* Similar to TopPerformers, relies on derived data. */}
           <CorrelationVolatility correlationData={correlationData} volatilityData={volatilityData} />
         </ErrorBoundary>
         <ErrorBoundary fallbackMessage="Could not load Risk Assessment.">
@@ -75,20 +82,18 @@ const AdvancedMetricsSection: React.FC<AdvancedMetricsSectionProps> = ({
         <ErrorBoundary fallbackMessage="Could not load Whale Watch.">
           <WhaleWatch 
             potentialWhaleActivity={potentialWhaleActivity || []} 
-            isLoading={isLoadingGlobal && !potentialWhaleActivity} // Loading if global load is on AND this specific data isn't there
-            error={errors.marketDataError} // WhaleWatch relies on marketData
+            // isLoading should reflect if potentialWhaleActivity is still being processed or if marketData is loading
+            isLoading={isLoadingGlobal && (!potentialWhaleActivity && !errors.marketDataError)}
+            error={errors.marketDataError} // Pass marketDataError as it's the source
           />
         </ErrorBoundary>
-        <ErrorBoundary fallbackMessage="Could not load Arbitrage Opportunities.">
-          {/* ArbitrageOpportunities fetches its own data and is read-only */}
+        <ErrorBoundary fallbackMessage="Could not load Arbitrage Opportunities. (This component is read-only)">
           <ArbitrageOpportunities />
         </ErrorBoundary>
-        <ErrorBoundary fallbackMessage="Could not load Market Cycle Indicator.">
-          {/* MarketCycleIndicator is conceptual / read-only */}
+        <ErrorBoundary fallbackMessage="Could not load Market Cycle Indicator. (This component is read-only)">
           <MarketCycleIndicator />
         </ErrorBoundary>
-        <ErrorBoundary fallbackMessage="Could not load Future Outlook.">
-          {/* FutureOutlook is conceptual / read-only */}
+        <ErrorBoundary fallbackMessage="Could not load Future Outlook. (This component is read-only)">
           <FutureOutlook />
         </ErrorBoundary>
       </div>
@@ -97,3 +102,4 @@ const AdvancedMetricsSection: React.FC<AdvancedMetricsSectionProps> = ({
 };
 
 export default AdvancedMetricsSection;
+
