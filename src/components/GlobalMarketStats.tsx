@@ -1,24 +1,49 @@
-import { ArrowUpIcon, TrendingUpIcon, ActivityIcon } from "lucide-react";
+import { ArrowUpIcon, TrendingUpIcon, ActivityIcon, AlertTriangleIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 const fetchGlobalData = async () => {
   const url = 'https://api.coingecko.com/api/v3/global';
-  const response = await fetch(url);
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => `Failed to read error response body (status ${response.status})`);
-    console.error(`Failed to fetch global data from ${url} with status ${response.status}: ${errorText}`, response);
-    throw new Error(`Failed to fetch global market data. Status: ${response.status}. Message: ${errorText}`);
+  const errorMessagePrefix = "fetch global market data";
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      let errorText = `Failed to ${errorMessagePrefix}. Status: ${response.status}.`;
+      if (response.status === 429) {
+        errorText = `API rate limit (429) for ${errorMessagePrefix}. Data may be temporarily unavailable.`;
+      } else {
+        try {
+          const responseText = await response.text();
+          errorText += ` Message: ${responseText.substring(0, 100) || '(empty body)'}`;
+        } catch (e) {
+          errorText += ` (Failed to parse error response body: ${response.statusText})`;
+        }
+      }
+      console.error(`Error in fetchGlobalData from ${url}: ${errorText}`, response);
+      throw new Error(errorText);
+    }
+    return response.json();
+  } catch (error) {
+    console.error(`Network or other error in fetchGlobalData for ${url}:`, error);
+    if (error instanceof Error && error.message.includes(errorMessagePrefix.split(" (")[0])) {
+        throw error;
+    }
+    throw new Error(`Network error during ${errorMessagePrefix}: ${error instanceof Error ? error.message : String(error)}`);
   }
-  return response.json();
 };
 
 const GlobalMarketStats = () => {
   const { data: globalDataResponse, isLoading, error } = useQuery({
     queryKey: ['globalMarketStatsData'],
     queryFn: fetchGlobalData,
-    refetchInterval: 60000,
-    staleTime: 30000,
+    refetchInterval: 120000,
+    staleTime: 90000,
+    retry: (failureCount, err: Error) => {
+      if (err.message.includes("429") || err.message.includes("404")) {
+        return false;
+      }
+      return failureCount < 2;
+    },
     meta: {
       onError: (err: Error) => {
         toast.error(`Global Stats Error: ${err.message}`);
@@ -39,12 +64,22 @@ const GlobalMarketStats = () => {
   }
 
   if (error) {
+    const isRateLimitError = error.message.includes("429");
+    const generalErrorMessage = "Data temporarily unavailable.";
+    const specificErrorMessage = error.message.length > 100 ? error.message.substring(0, 100) + "..." : error.message;
+
+    // The toast will show the detailed error. For the UI, keep it concise.
+    const displayMessage = isRateLimitError ? "API rate limit reached. Stats will update soon." : generalErrorMessage;
+    
     return (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         {[...Array(4)].map((_, i) => (
           <div key={i} className="glass-card p-6 rounded-lg text-center">
-            <ActivityIcon className="w-6 h-6 text-destructive mx-auto mb-2" />
-            <p className="text-xs text-destructive">Error loading stat</p>
+            <AlertTriangleIcon className="w-6 h-6 text-warning mx-auto mb-2" />
+            <p className="text-xs text-muted-foreground px-2">
+              {i === 0 ? displayMessage : (isRateLimitError ? "Unavailable" : "Error")}
+            </p>
+            {i === 0 && !isRateLimitError && <p className="text-xs text-muted-foreground/70 mt-1 truncate px-1" title={specificErrorMessage}>{specificErrorMessage}</p>}
           </div>
         ))}
       </div>

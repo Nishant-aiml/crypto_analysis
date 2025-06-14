@@ -10,13 +10,32 @@ interface CoinLiquidityProps {
 
 const fetchCoinTickers = async (coinId: string) => {
   const url = `https://api.coingecko.com/api/v3/coins/${coinId}/tickers?page=1&order=volume_desc&depth=true`;
-  const response = await fetch(url);
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => `Failed to read error response body (status ${response.status}) for ${coinId} tickers`);
-    console.error(`Failed to fetch tickers for ${coinId} from ${url} with status ${response.status}: ${errorText}`, response);
-    throw new Error(`Failed to fetch tickers for ${coinId}. Status: ${response.status}. Message: ${errorText}`);
+  const errorMessagePrefix = `fetch tickers for ${coinId}`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      let errorText = `Failed to ${errorMessagePrefix}. Status: ${response.status}.`;
+      if (response.status === 429) {
+        errorText = `API rate limit (429) for ${errorMessagePrefix}. Data temporarily unavailable.`;
+      } else {
+        try {
+          const responseBody = await response.text();
+          errorText += ` Message: ${responseBody.substring(0,100) || '(empty body)' }`;
+        } catch (e) {
+          errorText += ` (${response.statusText || 'Failed to parse error body'})`;
+        }
+      }
+      console.error(`Error in fetchCoinTickers for ${url}: ${errorText}`, response);
+      throw new Error(errorText);
+    }
+    return response.json();
+  } catch (error) {
+    console.error(`Network or other error in fetchCoinTickers for ${url}:`, error);
+    if (error instanceof Error && error.message.includes(errorMessagePrefix.split(" (")[0].replace("fetch ", ""))) {
+        throw error;
+    }
+    throw new Error(`Network error during ${errorMessagePrefix}: ${error instanceof Error ? error.message : String(error)}`);
   }
-  return response.json();
 };
 
 const TrustScoreIndicator: React.FC<{ score: string | null }> = ({ score }) => {
@@ -33,6 +52,12 @@ const CoinLiquidity: React.FC<CoinLiquidityProps> = ({ coinId, coinName, coinSym
     queryFn: () => fetchCoinTickers(coinId),
     staleTime: 1000 * 60 * 30, 
     refetchInterval: 1000 * 60 * 45, 
+    retry: (failureCount, err: Error) => {
+      if (err.message.includes("429") || err.message.includes("404")) {
+        return false;
+      }
+      return failureCount < 2;
+    },
     meta: {
       onError: (err: Error) => {
         toast.error(`Error fetching ${coinName} liquidity: ${err.message}`);
@@ -44,19 +69,18 @@ const CoinLiquidity: React.FC<CoinLiquidityProps> = ({ coinId, coinName, coinSym
     return <div className="glass-card p-6 rounded-lg animate-pulse">Loading {coinName} liquidity...</div>;
   }
   if (error) { 
-    return (
-      <div className="glass-card p-6 rounded-lg text-red-400 text-center">
-        <AlertTriangle className="w-6 h-6 mx-auto mb-2" />
-        <p>Error loading {coinName} liquidity.</p>
-        <p className="text-xs mt-1">See toast for more info or try refreshing.</p>
-      </div>
-    );
+    console.warn(`CoinLiquidity for ${coinName}: Not rendering due to data fetching error: ${error.message}`);
+    return null; // "Remove" error message by not rendering the component
   }
   
-  if (!tickerData?.tickers) {
+  if (!tickerData?.tickers || tickerData.tickers.length === 0) { // Also check for empty tickers array
      return (
-      <div className="glass-card p-6 rounded-lg text-center text-muted-foreground">
-        No ticker data available for {coinName}.
+      <div className="glass-card p-6 rounded-lg">
+        <h2 className="text-xl font-semibold mb-4 flex items-center">
+          <Droplets className="w-5 h-5 mr-2 text-teal-400" />
+          {coinName} ({coinSymbol.toUpperCase()}) Liquidity
+        </h2>
+        <p className="text-muted-foreground text-center py-4">No ticker data available for {coinName}.</p>
       </div>
     );
   }

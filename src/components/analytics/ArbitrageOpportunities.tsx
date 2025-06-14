@@ -1,9 +1,8 @@
 import React from 'react';
 import { useQuery, QueryKey } from '@tanstack/react-query';
-import { GitCompareArrows, TrendingUp, TrendingDown, Info, AlertTriangle } from 'lucide-react';
+import { GitCompareArrows, TrendingUp, Info, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import {
   Tooltip,
   TooltipContent,
@@ -12,7 +11,7 @@ import {
 } from "@/components/ui/tooltip";
 import { toast } from 'sonner';
 
-const TARGET_COIN_ID = 'bitcoin'; // Focus on Bitcoin for this example
+const TARGET_COIN_ID = 'bitcoin';
 
 interface Ticker {
   market: { name: string; identifier: string; };
@@ -33,36 +32,30 @@ const fetchArbitrageData = async (coinId: string): Promise<ArbitrageData> => {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      let errorText = `${errorMessagePrefix}, status: ${response.status}`;
+      let errorText = `Failed ${errorMessagePrefix}. Status: ${response.status}`;
       if (response.status === 429) {
-        errorText = `API rate limit (429) for ${errorMessagePrefix}. Please try again later.`;
+        errorText = `API rate limit (429) for ${errorMessagePrefix}. Data temporarily unavailable.`;
       } else {
         try {
-          const errorData = await response.json();
-          errorText += ` - Details: ${JSON.stringify(errorData).substring(0, 100)}`;
+          const responseText = await response.text();
+          errorText += ` - Details: ${responseText.substring(0, 100) || '(empty body)'}`;
         } catch (e) {
-          try {
-            const textData = await response.text();
-            errorText += ` - Response: ${textData.substring(0, 100) || '(empty body)'}`;
-          } catch (textE) {
-            errorText += ` (${response.statusText || 'Failed to parse error response body'})`;
-          }
+          errorText += ` (${response.statusText || 'Failed to parse error response body'})`;
         }
       }
       console.error(`Error in fetchArbitrageData for ${url}: ${errorText}`);
       throw new Error(errorText);
     }
     const data = await response.json();
-    // Filter for high trust scores and sort by volume, take top N to avoid overwhelming display
     const highTrustTickers = data.tickers
       .filter((t: Ticker) => t.trust_score === 'green' && t.volume > 0)
       .sort((a: Ticker, b: Ticker) => b.volume - a.volume)
-      .slice(0, 10); // Limit to top 10 relevant tickers
+      .slice(0, 10);
 
     return { coinId, tickers: highTrustTickers };
   } catch (error) {
     console.error(`Network or other error in fetchArbitrageData for ${url}:`, error);
-    if (error instanceof Error && error.message.includes(errorMessagePrefix.split(" (")[0])) {
+    if (error instanceof Error && error.message.includes(errorMessagePrefix.split(" (")[0].replace("fetching ", ""))) {
         throw error;
     }
     throw new Error(`Network error during ${errorMessagePrefix}: ${error instanceof Error ? error.message : String(error)}`);
@@ -73,9 +66,9 @@ const ArbitrageOpportunities: React.FC = () => {
   const { data, isLoading, error } = useQuery<ArbitrageData, Error, ArbitrageData, QueryKey>({
     queryKey: ['arbitrageData', TARGET_COIN_ID],
     queryFn: () => fetchArbitrageData(TARGET_COIN_ID),
-    staleTime: 1000 * 60 * 15, // 15 minutes stale time
-    refetchInterval: 1000 * 60 * 30, // 30 minutes refetch interval
-    retry: (failureCount, err) => {
+    staleTime: 1000 * 60 * 15, 
+    refetchInterval: 1000 * 60 * 30,
+    retry: (failureCount, err: Error) => {
       if (err.message.includes("429") || err.message.includes("404")) {
         return false;
       }
@@ -83,10 +76,17 @@ const ArbitrageOpportunities: React.FC = () => {
     },
     meta: {
       onError: (err: Error) => {
-        toast.error(`Failed to load arbitrage data: ${err.message}`);
+        // Toast is still good for more detailed background errors
+        toast.error(`Arbitrage Data Error: ${err.message}`);
       }
     }
   });
+
+  if (error) {
+    // Log for debugging, but don't show component or error message in UI
+    console.warn(`ArbitrageOpportunities: Not rendering due to data fetching error: ${error.message}`);
+    return null; // "Remove" component if there's an error
+  }
 
   const arbitrageOpportunities = data?.tickers && data.tickers.length > 1 
     ? data.tickers
@@ -118,6 +118,7 @@ const ArbitrageOpportunities: React.FC = () => {
         .slice(0, 5) // Show top 5 opportunities
     : [];
 
+
   return (
     <Card className="glass-card">
       <CardHeader>
@@ -128,19 +129,8 @@ const ArbitrageOpportunities: React.FC = () => {
       </CardHeader>
       <CardContent>
         {isLoading && <p className="text-center py-4">Loading arbitrage data for Bitcoin...</p>}
-        {error && (
-           <div className="bg-destructive/10 border border-destructive/30 text-destructive p-4 rounded-md text-center">
-            <div className="flex items-center justify-center mb-2">
-              <AlertTriangle className="w-5 h-5 mr-2" />
-              <span className="font-semibold">Error Fetching Arbitrage Data</span>
-            </div>
-            <p className="text-sm">{(error as Error).message}</p>
-            <p className="text-xs mt-1">
-              This could be due to API issues or network problems. Please try again later.
-            </p>
-          </div>
-        )}
-        {!isLoading && !error && data && (
+        {/* Error display is removed as per request; component returns null on error */}
+        {!isLoading && data && (
           <>
             <p className="text-muted-foreground mb-4 text-sm">
               Potential raw price differences for Bitcoin across exchanges. Does not account for fees, slippage, or transfer times.
@@ -184,7 +174,7 @@ const ArbitrageOpportunities: React.FC = () => {
             </div>
           </>
         )}
-         {!isLoading && !error && !data && ( // Case where data is null/undefined but no error
+         {!isLoading && !data && !error && ( 
           <p className="text-muted-foreground text-center py-4">No arbitrage data available at the moment.</p>
         )}
       </CardContent>
