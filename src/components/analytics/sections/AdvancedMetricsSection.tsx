@@ -6,6 +6,7 @@ import MarketCycleIndicator from '@/components/analytics/MarketCycleIndicator'; 
 import FutureOutlook from '@/components/analytics/FutureOutlook'; // Read-only
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { CoinData } from '@/types/crypto';
+import ArbitrageOpportunities from '@/components/analytics/ArbitrageOpportunities';
 
 // Types for props, derived from Analytics.tsx calculations
 interface CorrelationData { name: string; symbol: string; correlation: number; }
@@ -74,7 +75,9 @@ const AdvancedMetricsSection: React.FC<AdvancedMetricsSectionProps> = ({
         <ErrorBoundary fallbackMessage="Could not load Risk Assessment.">
           <RiskAssessment riskData={riskAssessmentData} />
         </ErrorBoundary>
-        {/* WhaleWatch and ArbitrageOpportunities removed as per request */}
+        <ErrorBoundary fallbackMessage="Could not load Arbitrage Opportunities.">
+          <ArbitrageOpportunities />
+        </ErrorBoundary>
         <ErrorBoundary fallbackMessage="Could not load Market Cycle Indicator. (This component is read-only)">
           <MarketCycleIndicator />
         </ErrorBoundary>
