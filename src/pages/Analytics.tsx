@@ -122,7 +122,7 @@ const Analytics = () => {
               <ExchangeAnalysis />
             </ErrorBoundary>
             <ErrorBoundary fallbackMessage="Could not load Volume Analysis.">
-              <VolumeAnalysis marketData={marketData} />
+              <VolumeAnalysis marketData={marketData} isLoading={isLoading} />
             </ErrorBoundary>
           </div>
         </section>
@@ -207,3 +207,4 @@ const Analytics = () => {
 };
 
 export default Analytics;
+
