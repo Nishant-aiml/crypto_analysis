@@ -142,7 +142,7 @@ const Alerts = () => {
       if (permission === 'granted') {
         toast.success("Browser notifications enabled!");
       } else {
-        toast.warn("Browser notifications not enabled. You might miss alerts.");
+        toast.warning("Browser notifications not enabled. You might miss alerts.");
       }
     }
   };
