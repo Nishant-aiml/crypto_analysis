@@ -14,6 +14,10 @@ import RiskAssessment from '@/components/analytics/RiskAssessment';
 import FutureOutlook from '@/components/analytics/FutureOutlook';
 import CoinComparisonTool from '@/components/analytics/CoinComparisonTool';
 import MarketMoodRing from '@/components/analytics/MarketMoodRing';
+import WhaleWatch from '@/components/analytics/WhaleWatch';
+import ArbitrageOpportunities from '@/components/analytics/ArbitrageOpportunities';
+import MarketCycleIndicator from '@/components/analytics/MarketCycleIndicator';
+import SeasonalPatterns from '@/components/analytics/SeasonalPatterns';
 
 const fetchAdvancedMarketData = async () => {
   const response = await fetch(
@@ -55,7 +59,6 @@ const Analytics = () => {
     );
   }
 
-  // Calculate correlation between Bitcoin and other coins
   const calculateCorrelation = (coin1Prices: number[], coin2Prices: number[]) => {
     if (!coin1Prices || !coin2Prices || coin1Prices.length !== coin2Prices.length || coin1Prices.length === 0) return 0;
     
@@ -80,7 +83,6 @@ const Analytics = () => {
     correlation: calculateCorrelation(bitcoinPrices, coin.sparkline_in_7d?.price || []),
   })) || [];
 
-  // Calculate volatility (standard deviation of 7-day prices)
   const calculateVolatility = (prices: number[]) => {
     if (!prices || prices.length === 0) return 0;
     const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
@@ -94,7 +96,6 @@ const Analytics = () => {
     price: coin.current_price,
   })) || [];
 
-  // Top gainers and losers
   const sortedByChange = [...marketData].sort((a: any, b: any) => (b.price_change_percentage_24h ?? -Infinity) - (a.price_change_percentage_24h ?? -Infinity));
   const topGainers = sortedByChange.slice(0, 5);
   const topLosers = sortedByChange.slice(-5).reverse();
@@ -162,27 +163,27 @@ const Analytics = () => {
           </div>
         </section>
         
-        {/* Phase 3: Advanced Metrics & Risk Analysis */}
+        {/* Phase 3: Advanced Metrics & Predictive Insights */}
         <section className="mb-10">
-          <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Advanced Metrics & Risk Analysis</h2>
+          <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Advanced Metrics & Predictive Insights</h2>
           <div className="space-y-8">
             <TopPerformers topGainers={topGainers} topLosers={topLosers} />
             <CorrelationVolatility correlationData={correlationData} volatilityData={volatilityData} />
             <RiskAssessment riskData={riskAssessmentData} />
+            <WhaleWatch />
+            <ArbitrageOpportunities />
+            <MarketCycleIndicator />
+            <SeasonalPatterns />
+            <FutureOutlook /> {/* Moved here as it's also a predictive outlook */}
           </div>
         </section>
 
-        {/* Phase 4: Predictive Insights & Future Outlook */}
-        <section className="mb-10">
-          <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Predictive Insights & Future Outlook</h2>
-          <div className="space-y-8">
-            <FutureOutlook />
-          </div>
-        </section>
+        {/* Phase 4: Portfolio Intelligence - SKIPPED as per plan */}
+        {/* Original Phase 4 was: Predictive Insights & Future Outlook, content moved to Phase 3 */}
 
         {/* Phase 5: Community & Gamification */}
         <section className="mb-10">
-          <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Phase 5: Community & Gamification</h2>
+          <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Community & Tools</h2> {/* Renamed for clarity */}
           <div className="space-y-8">
             <CoinComparisonTool />
             <MarketMoodRing />
