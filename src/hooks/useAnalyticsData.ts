@@ -16,12 +16,12 @@ interface TrendingCoinItem {
   };
 }
 
-interface TrendingData {
+export interface TrendingData { // Exporting for use in other files if needed, and for clarity
   coins: TrendingCoinItem[];
   exchanges: any[]; // Add a more specific type if known
 }
 
-interface Exchange {
+export interface Exchange { // Exporting for use in other files if needed
   id: string;
   name: string;
   year_established: number;
@@ -48,37 +48,7 @@ interface AnalyticsDataError {
   exchangesError?: Error | null;
 }
 
-const fetchAdvancedMarketData = async (): Promise<CoinData[]> => {
-  const response = await fetch(
-    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=true&price_change_percentage=1h%2C24h%2C7d'
-  );
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => `Failed to read error response body (status ${response.status})`);
-    console.error('Failed to fetch advanced market data', response.status, errorText);
-    throw new Error(`Failed to fetch advanced market data. Status: ${response.status}. Message: ${errorText}`);
-  }
-  return response.json();
-};
-
-const fetchTrendingCoins = async (): Promise<TrendingData> => {
-  const response = await fetch('https://api.coingecko.com/api/v3/search/trending');
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => `Failed to read error response body (status ${response.status})`);
-    console.error('Failed to fetch trending data', response.status, errorText);
-    throw new Error(`Failed to fetch trending data. Status: ${response.status}. Message: ${errorText}`);
-  }
-  return response.json();
-};
-
-const fetchExchanges = async (): Promise<Exchange[]> => {
-  const response = await fetch('https://api.coingecko.com/api/v3/exchanges?per_page=10');
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => `Failed to read error response body (status ${response.status})`);
-    console.error('Failed to fetch exchange data', response.status, errorText);
-    throw new Error(`Failed to fetch exchange data. Status: ${response.status}. Message: ${errorText}`);
-  }
-  return response.json();
-};
+// The local fetch functions were removed as they are now imported from coingeckoService.
 
 export const useAnalyticsData = () => {
   const retryConfig = {
@@ -102,7 +72,7 @@ export const useAnalyticsData = () => {
     data: marketData, 
     isLoading: isLoadingMarketData, 
     error: marketDataErrorRaw 
-  } = useQuery<CoinData[], Error, CoinData[], QueryKey>({ // Explicitly type QueryKey
+  } = useQuery<CoinData[], Error>({ // Simplified types, QueryKey is inferred
     queryKey: ['advancedMarketData'],
     queryFn: fetchAdvancedMarketData,
     staleTime: 1000 * 60 * 5, // 5 minutes stale time
@@ -119,7 +89,7 @@ export const useAnalyticsData = () => {
     data: trendingData, 
     isLoading: isLoadingTrendingCoins, 
     error: trendingCoinsErrorRaw 
-  } = useQuery<TrendingData, Error, TrendingData, QueryKey>({ // Explicitly type QueryKey
+  } = useQuery<TrendingData, Error>({ // Simplified types
     queryKey: ['trendingCoinsAnalytics'],
     queryFn: fetchTrendingCoins,
     staleTime: 1000 * 60 * 30, // 30 minutes stale time
@@ -136,7 +106,7 @@ export const useAnalyticsData = () => {
     data: exchanges, 
     isLoading: isLoadingExchanges, 
     error: exchangesErrorRaw 
-  } = useQuery<Exchange[], Error, Exchange[], QueryKey>({ // Explicitly type QueryKey
+  } = useQuery<Exchange[], Error>({ // Simplified types
     queryKey: ['exchangesAnalytics'],
     queryFn: fetchExchanges,
     staleTime: 1000 * 60 * 60, // 1 hour stale time
