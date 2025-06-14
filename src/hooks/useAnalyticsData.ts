@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+
+import { useQuery, QueryKey } from '@tanstack/react-query'; // Added QueryKey
 import { CoinData } from '@/types/crypto';
 import { toast } from 'sonner';
 
@@ -84,13 +85,15 @@ export const useAnalyticsData = () => {
     data: marketData, 
     isLoading: isLoadingMarketData, 
     error: marketDataErrorRaw 
-  } = useQuery<CoinData[], Error>({
-    queryKey: ['advancedMarketData'], // Keep key consistent if data structure is the same
+  } = useQuery<CoinData[], Error, CoinData[], QueryKey>({ // Explicitly type QueryKey
+    queryKey: ['advancedMarketData'],
     queryFn: fetchAdvancedMarketData,
     staleTime: 1000 * 60 * 5, // 5 minutes stale time
     refetchInterval: 1000 * 60 * 10, // 10 minutes refetch interval
-    onError: (err: Error) => {
-      toast.error(`Market Data Error: ${err.message}`);
+    meta: {
+      onError: (err: Error) => {
+        toast.error(`Market Data Error: ${err.message}`);
+      }
     }
   });
 
@@ -98,13 +101,15 @@ export const useAnalyticsData = () => {
     data: trendingData, 
     isLoading: isLoadingTrendingCoins, 
     error: trendingCoinsErrorRaw 
-  } = useQuery<TrendingData, Error>({
-    queryKey: ['trendingCoinsAnalytics'], // Use a distinct key
+  } = useQuery<TrendingData, Error, TrendingData, QueryKey>({ // Explicitly type QueryKey
+    queryKey: ['trendingCoinsAnalytics'],
     queryFn: fetchTrendingCoins,
     staleTime: 1000 * 60 * 60, // 1 hour
     refetchInterval: 1000 * 60 * 90, // 1.5 hours
-    onError: (err: Error) => {
-      toast.error(`Trending Coins Error: ${err.message}`);
+    meta: {
+      onError: (err: Error) => {
+        toast.error(`Trending Coins Error: ${err.message}`);
+      }
     }
   });
 
@@ -112,13 +117,15 @@ export const useAnalyticsData = () => {
     data: exchanges, 
     isLoading: isLoadingExchanges, 
     error: exchangesErrorRaw 
-  } = useQuery<Exchange[], Error>({
-    queryKey: ['exchangesAnalytics'], // Use a distinct key
+  } = useQuery<Exchange[], Error, Exchange[], QueryKey>({ // Explicitly type QueryKey
+    queryKey: ['exchangesAnalytics'],
     queryFn: fetchExchanges,
     staleTime: 1000 * 60 * 60, // 1 hour
     refetchInterval: 1000 * 60 * 90, // 1.5 hours
-    onError: (err: Error) => {
-      toast.error(`Exchanges Data Error: ${err.message}`);
+    meta: {
+      onError: (err: Error) => {
+        toast.error(`Exchanges Data Error: ${err.message}`);
+      }
     }
   });
 
@@ -129,7 +136,6 @@ export const useAnalyticsData = () => {
   if (trendingCoinsErrorRaw) errors.trendingCoinsError = trendingCoinsErrorRaw;
   if (exchangesErrorRaw) errors.exchangesError = exchangesErrorRaw;
   
-  // Consolidate overall error for the page, prioritizing market data error
   const overallError = marketDataErrorRaw || trendingCoinsErrorRaw || exchangesErrorRaw;
 
   return {
@@ -139,7 +145,8 @@ export const useAnalyticsData = () => {
       exchanges,
     } as AnalyticsPageData,
     isLoading,
-    error: overallError, // This provides a general error status
-    errors, // This provides specific errors for partial data rendering
+    error: overallError,
+    errors,
   };
 };
+
