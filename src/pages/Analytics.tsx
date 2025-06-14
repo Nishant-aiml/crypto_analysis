@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navigation from '@/components/Navigation';
 import AnalyticsHeader from '@/components/analytics/AnalyticsHeader';
@@ -12,7 +11,7 @@ import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { calculateCorrelation, calculateVolatility } from '@/utils/analyticsUtils';
 import { CoinData } from '@/types/crypto';
 // Types for derived data to be passed as props
-import { WhaleActivityCoin } from '@/components/analytics/WhaleWatch'; // Import if needed for type hint
+import { WhaleActivityCoin } from '@/components/analytics/WhaleWatch';
 
 interface CorrelationData { name: string; symbol: string; correlation: number; }
 interface VolatilityData { name: string; volatility: number; price: number; }
@@ -96,7 +95,10 @@ const Analytics = () => {
   
   const potentialWhaleActivity: WhaleActivityCoin[] | undefined = marketData
     ?.filter(coin => coin.market_cap > 0 ? (coin.total_volume / coin.market_cap) * 100 > 20 && coin.total_volume > 1000000 : false)
-    .map(coin => ({...coin, volume_to_market_cap_ratio: coin.market_cap > 0 ? (coin.total_volume / coin.market_cap) * 100 : 0})) // Add ratio for type consistency
+    .map((coin: CoinData): WhaleActivityCoin => ({ // Explicitly type the parameter and return of the map callback
+      ...coin, 
+      volume_to_market_cap_ratio: coin.market_cap > 0 ? (coin.total_volume / coin.market_cap) * 100 : 0
+    }))
     .sort((a, b) => (b.volume_to_market_cap_ratio) - (a.volume_to_market_cap_ratio))
     .slice(0, 10);
 
