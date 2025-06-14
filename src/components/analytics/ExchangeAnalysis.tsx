@@ -1,29 +1,39 @@
-import { useQuery } from '@tanstack/react-query';
-import { Building2, BarChart3, DollarSign } from 'lucide-react';
+
+import { Building2 } from 'lucide-react'; // Removed BarChart3, DollarSign
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 
-const fetchExchanges = async () => {
-  const response = await fetch('https://api.coingecko.com/api/v3/exchanges?per_page=10');
-  if (!response.ok) throw new Error('Failed to fetch exchange data');
-  return response.json();
-};
+// Define type for individual exchange, consistent with useAnalyticsData
+interface Exchange {
+  id: string;
+  name: string;
+  image: string;
+  trust_score: number;
+  trade_volume_24h_btc: number;
+}
 
-const ExchangeAnalysis = () => {
-  const { data: exchanges, isLoading } = useQuery({
-    queryKey: ['exchanges'],
-    queryFn: fetchExchanges,
-    staleTime: 1000 * 60 * 60, // 1 hour
-    refetchInterval: 1000 * 60 * 90, // 1.5 hours
-  });
+interface ExchangeAnalysisProps {
+  exchanges?: Exchange[];
+  isLoading: boolean;
+  error?: Error | null;
+}
 
+const ExchangeAnalysis: React.FC<ExchangeAnalysisProps> = ({ exchanges, isLoading, error }) => {
   if (isLoading) {
     return <div className="glass-card p-6 rounded-lg animate-pulse">Loading exchange data...</div>;
   }
+  
+  if (error) {
+    return <div className="glass-card p-6 rounded-lg text-red-400">Error loading exchange data: {error.message}</div>;
+  }
 
-  const exchangeVolumeData = exchanges?.slice(0, 8).map((exchange: any) => ({
-    name: exchange.name.substring(0, 10),
+  if (!exchanges || exchanges.length === 0) {
+    return <div className="glass-card p-6 rounded-lg text-muted-foreground">No exchange data available.</div>;
+  }
+
+  const exchangeVolumeData = exchanges?.slice(0, 8).map((exchange: Exchange) => ({
+    name: exchange.name.substring(0, 10), // Keep abbreviation for chart
     volume: exchange.trade_volume_24h_btc,
-    trustScore: exchange.trust_score,
+    trustScore: exchange.trust_score, // Keep if used in tooltip or elsewhere
   })) || [];
 
   return (
@@ -50,7 +60,7 @@ const ExchangeAnalysis = () => {
         </ResponsiveContainer>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {exchanges?.slice(0, 4).map((exchange: any) => (
+        {exchanges?.slice(0, 4).map((exchange: Exchange) => (
           <div key={exchange.id} className="p-3 bg-secondary/20 rounded-lg">
             <div className="flex items-center space-x-3">
               <img src={exchange.image} alt={exchange.name} className="w-8 h-8" />
@@ -75,3 +85,4 @@ const ExchangeAnalysis = () => {
 };
 
 export default ExchangeAnalysis;
+
