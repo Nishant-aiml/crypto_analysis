@@ -127,7 +127,7 @@ const ArbitrageOpportunities: React.FC = () => {
                 </TableBody>
               </Table>
             ) : (
-              <p className="text-muted-foreground">No significant raw price differences (>0.5%) found for Bitcoin among top volume exchanges with green trust scores at the moment.</p>
+              <p className="text-muted-foreground">No significant raw price differences (&gt;0.5%) found for Bitcoin among top volume exchanges with green trust scores at the moment.</p>
             )}
             <div className="text-xs text-muted-foreground mt-3 flex items-center">
               <Info className="w-3 h-3 mr-1" />
@@ -141,3 +141,4 @@ const ArbitrageOpportunities: React.FC = () => {
 };
 
 export default ArbitrageOpportunities;
+
