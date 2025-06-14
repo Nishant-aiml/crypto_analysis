@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -42,6 +41,7 @@ const CoinComparisonTool: React.FC = () => {
     queryKey: ['compareCoins', submittedCoinIds],
     queryFn: () => fetchCoinData(submittedCoinIds),
     enabled: submittedCoinIds.length === 2,
+    staleTime: 1000 * 60 * 10, // Added 10 minutes stale time
   });
 
   const handleSubmit = (e: React.FormEvent) => {

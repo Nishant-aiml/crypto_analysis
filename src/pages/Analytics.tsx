@@ -34,7 +34,8 @@ const Analytics = () => {
   const { data: marketData, isLoading, error } = useQuery({
     queryKey: ['advancedMarketData'],
     queryFn: fetchAdvancedMarketData,
-    refetchInterval: 60000,
+    refetchInterval: 1000 * 60 * 15, // Increased to 15 minutes
+    staleTime: 1000 * 60 * 10, // Added 10 minutes stale time
   });
 
   if (isLoading || !marketData) {

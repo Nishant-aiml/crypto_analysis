@@ -59,13 +59,15 @@ const MarketMoodRing: React.FC = () => {
   const { data: globalData, isLoading: isLoadingGlobal, error: errorGlobal } = useQuery<GlobalData>({
     queryKey: ['globalMarketDataForMood'],
     queryFn: fetchGlobalMarketData,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 10, // Increased to 10 minutes
+    refetchInterval: 1000 * 60 * 15, // Added 15 minutes refetch interval
   });
 
   const { data: topCoinsData, isLoading: isLoadingCoins, error: errorCoins } = useQuery<MarketCoin[]>({
     queryKey: ['topCoinsMarketDataForMood'],
     queryFn: fetchTopCoinsMarketData,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 10, // Increased to 10 minutes
+    refetchInterval: 1000 * 60 * 15, // Added 15 minutes refetch interval
   });
   
   const moodScore = calculateMoodScore(globalData, topCoinsData);

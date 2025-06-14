@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { Building2, BarChart3, DollarSign } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
@@ -13,7 +12,8 @@ const ExchangeAnalysis = () => {
   const { data: exchanges, isLoading } = useQuery({
     queryKey: ['exchanges'],
     queryFn: fetchExchanges,
-    refetchInterval: 600000, // 10 minutes
+    refetchInterval: 1000 * 60 * 15, // Increased to 15 minutes
+    staleTime: 1000 * 60 * 10, // Added 10 minutes stale time (was 10 min refetch)
   });
 
   if (isLoading) {

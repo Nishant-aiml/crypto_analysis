@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Crown, TrendingUp, TrendingDown } from 'lucide-react';
@@ -21,13 +20,15 @@ const MarketDominance = () => {
   const { data: globalData, isLoading: globalLoading } = useQuery({
     queryKey: ['globalMarketData'],
     queryFn: fetchGlobalData,
-    refetchInterval: 300000, // 5 minutes
+    refetchInterval: 1000 * 60 * 15, // Increased to 15 minutes
+    staleTime: 1000 * 60 * 10, // Added 10 minutes stale time
   });
 
   const { data: topCoins, isLoading: coinsLoading } = useQuery({
     queryKey: ['topCoinsForDominance'],
     queryFn: fetchTopCoinsForDominance,
-    refetchInterval: 300000, // 5 minutes
+    refetchInterval: 1000 * 60 * 15, // Increased to 15 minutes
+    staleTime: 1000 * 60 * 10, // Added 10 minutes stale time
   });
 
   if (globalLoading || coinsLoading) {

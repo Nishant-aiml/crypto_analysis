@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { GitCompareArrows, TrendingUp, TrendingDown, Info } from 'lucide-react';
@@ -46,7 +45,8 @@ const ArbitrageOpportunities: React.FC = () => {
   const { data, isLoading, error } = useQuery<ArbitrageData>({
     queryKey: ['arbitrageData', TARGET_COIN_ID],
     queryFn: () => fetchArbitrageData(TARGET_COIN_ID),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 10, // Adjusted to 10 minutes
+    refetchInterval: 1000 * 60 * 15, // Added 15 minutes refetch interval
   });
 
   const arbitrageOpportunities = data?.tickers && data.tickers.length > 1 
@@ -141,4 +141,3 @@ const ArbitrageOpportunities: React.FC = () => {
 };
 
 export default ArbitrageOpportunities;
-

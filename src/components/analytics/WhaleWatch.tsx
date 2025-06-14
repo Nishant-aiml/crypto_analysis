@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Waves, TrendingUp, DollarSign } from 'lucide-react';
@@ -35,7 +34,8 @@ const WhaleWatch: React.FC = () => {
   const { data: marketData, isLoading, error } = useQuery<WhaleCoin[]>({
     queryKey: ['whaleWatchData'],
     queryFn: fetchMarketDataForWhaleWatch,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 10, // Adjusted to 10 minutes
+    refetchInterval: 1000 * 60 * 15, // Added 15 minutes refetch interval
   });
 
   // Simplified logic: coins with high volume to market cap ratio (e.g., > 20%)

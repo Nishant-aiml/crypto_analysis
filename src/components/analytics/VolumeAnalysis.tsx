@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { Activity, AlertTriangle, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LineChart, Line } from 'recharts';
@@ -15,7 +14,8 @@ const VolumeAnalysis = () => {
   const { data: marketData, isLoading } = useQuery({
     queryKey: ['volumeAnalysis'],
     queryFn: fetchMarketData,
-    refetchInterval: 300000, // 5 minutes
+    refetchInterval: 1000 * 60 * 15, // Increased to 15 minutes
+    staleTime: 1000 * 60 * 10, // Added 10 minutes stale time
   });
 
   if (isLoading) {

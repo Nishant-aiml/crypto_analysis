@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { Droplets, ExternalLink } from 'lucide-react';
 
@@ -28,7 +27,8 @@ const CoinLiquidity: React.FC<CoinLiquidityProps> = ({ coinId, coinName, coinSym
   const { data: tickerData, isLoading, error } = useQuery({
     queryKey: ['coinTickers', coinId],
     queryFn: () => fetchCoinTickers(coinId),
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 60 * 10, // Increased to 10 minutes
+    refetchInterval: 1000 * 60 * 15, // Added 15 minutes refetch interval
   });
 
   if (isLoading) {
