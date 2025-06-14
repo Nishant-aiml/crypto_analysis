@@ -1,27 +1,41 @@
+
 import { useQuery } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Crown, TrendingUp, TrendingDown } from 'lucide-react';
-
-const fetchGlobalData = async () => {
-  const response = await fetch('https://api.coingecko.com/api/v3/global');
-  if (!response.ok) throw new Error('Failed to fetch global data');
-  return response.json();
-};
-
-const fetchTopCoinsForDominance = async () => {
-  const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1');
-  if (!response.ok) throw new Error('Failed to fetch coins data');
-  return response.json();
-};
+import { fetchGlobalData, fetchTopCoinsForDominance } from '@/services/coingeckoService';
+import { toast } from 'sonner';
 
 const COLORS = ['#F59E0B', '#8B5CF6', '#10B981', '#EF4444', '#06B6D4', '#84CC16', '#F97316', '#8989DE'];
 
 const MarketDominance = () => {
+    const retryConfig = {
+    retry: (failureCount: number, err: Error) => {
+      if (err.message.includes("429")) {
+        if (failureCount === 0) toast.warning(`API rate limit hit. Retrying...`);
+        return failureCount < 3;
+      }
+      if (err.message.includes("404")) return false;
+      return failureCount < 2;
+    },
+    retryDelay: (attemptIndex: number, err: Error) => {
+      if (err.message.includes("429")) {
+        return Math.min(1000 * 2 ** attemptIndex, 30000) + Math.random() * 200;
+      }
+      return 1000 * (attemptIndex + 1);
+    },
+  };
+
   const { data: globalData, isLoading: globalLoading } = useQuery({
-    queryKey: ['globalMarketData'],
+    queryKey: ['globalData'],
     queryFn: fetchGlobalData,
     staleTime: 1000 * 60 * 60, // 1 hour
     refetchInterval: 1000 * 60 * 90, // 1.5 hours
+    ...retryConfig,
+    meta: {
+        onError: (err: Error) => {
+          toast.error(`Market Dominance (Global) Error: ${err.message}`);
+        }
+    }
   });
 
   const { data: topCoins, isLoading: coinsLoading } = useQuery({
@@ -29,6 +43,12 @@ const MarketDominance = () => {
     queryFn: fetchTopCoinsForDominance,
     staleTime: 1000 * 60 * 60, // 1 hour
     refetchInterval: 1000 * 60 * 90, // 1.5 hours
+    ...retryConfig,
+    meta: {
+        onError: (err: Error) => {
+          toast.error(`Market Dominance (Top Coins) Error: ${err.message}`);
+        }
+    }
   });
 
   if (globalLoading || coinsLoading) {

@@ -1,48 +1,27 @@
 import { ArrowUpIcon, TrendingUpIcon, ActivityIcon, AlertTriangleIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-
-const fetchGlobalData = async () => {
-  const url = 'https://api.coingecko.com/api/v3/global';
-  const errorMessagePrefix = "fetch global market data";
-  try {
-    const response = await fetch(url);
-    if (!response.ok) {
-      let errorText = `Failed to ${errorMessagePrefix}. Status: ${response.status}.`;
-      if (response.status === 429) {
-        errorText = `API rate limit (429) for ${errorMessagePrefix}. Data may be temporarily unavailable.`;
-      } else {
-        try {
-          const responseText = await response.text();
-          errorText += ` Message: ${responseText.substring(0, 100) || '(empty body)'}`;
-        } catch (e) {
-          errorText += ` (Failed to parse error response body: ${response.statusText})`;
-        }
-      }
-      console.error(`Error in fetchGlobalData from ${url}: ${errorText}`, response);
-      throw new Error(errorText);
-    }
-    return response.json();
-  } catch (error) {
-    console.error(`Network or other error in fetchGlobalData for ${url}:`, error);
-    if (error instanceof Error && error.message.includes(errorMessagePrefix.split(" (")[0])) {
-        throw error;
-    }
-    throw new Error(`Network error during ${errorMessagePrefix}: ${error instanceof Error ? error.message : String(error)}`);
-  }
-};
+import { fetchGlobalData } from "@/services/coingeckoService";
 
 const GlobalMarketStats = () => {
   const { data: globalDataResponse, isLoading, error } = useQuery({
-    queryKey: ['globalMarketStatsData'],
+    queryKey: ['globalData'],
     queryFn: fetchGlobalData,
     refetchInterval: 120000,
     staleTime: 90000,
     retry: (failureCount, err: Error) => {
-      if (err.message.includes("429") || err.message.includes("404")) {
-        return false;
+      if (err.message.includes("429")) {
+        if (failureCount === 0) toast.warning(`API rate limit hit. Retrying...`);
+        return failureCount < 3; // Retry up to 3 times
       }
+      if (err.message.includes("404")) return false;
       return failureCount < 2;
+    },
+    retryDelay: (attemptIndex, err: Error) => {
+      if (err.message.includes("429")) {
+        return Math.min(1000 * 2 ** attemptIndex, 30000) + Math.random() * 200;
+      }
+      return 1000 * (attemptIndex + 1);
     },
     meta: {
       onError: (err: Error) => {

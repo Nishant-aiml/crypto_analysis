@@ -1,4 +1,6 @@
 
+import { genericFetchCoinGecko as originalGenericFetch, fetchCoinPrices as originalFetchCoinPrices, fetchTopCoinsForPortfolio as originalFetchTopCoins } from './coingeckoService';
+
 export const genericFetchCoinGecko = async (url: string, errorMessagePrefix: string) => {
   try {
     const response = await fetch(url);
@@ -43,4 +45,39 @@ export const fetchCoinPrices = async (coinIds: string[]) => {
 export const fetchTopCoinsForPortfolio = async () => {
   const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1';
   return genericFetchCoinGecko(url, "fetching top coins for portfolio");
+};
+
+export const fetchGlobalData = async () => {
+  const url = 'https://api.coingecko.com/api/v3/global';
+  return genericFetchCoinGecko(url, "fetching global market data");
+};
+
+export const fetchAdvancedMarketData = async () => {
+  const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=true&price_change_percentage=1h%2C24h%2C7d';
+  return genericFetchCoinGecko(url, "fetching advanced market data");
+};
+
+export const fetchTrendingCoins = async () => {
+  const url = 'https://api.coingecko.com/api/v3/search/trending';
+  return genericFetchCoinGecko(url, "fetching trending coins");
+};
+
+export const fetchExchanges = async () => {
+  const url = 'https://api.coingecko.com/api/v3/exchanges?per_page=10';
+  return genericFetchCoinGecko(url, "fetching exchanges");
+};
+
+export const fetchCoinDetails = async (coinId: string) => {
+  const url = `https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false&market_data=false&community_data=true&developer_data=true&sparkline=false`;
+  return genericFetchCoinGecko(url, `fetching details for ${coinId}`);
+};
+
+export const fetchCoinTickers = async (coinId: string) => {
+  const url = `https://api.coingecko.com/api/v3/coins/${coinId}/tickers?page=1&order=volume_desc&depth=true`;
+  return genericFetchCoinGecko(url, `fetching tickers for ${coinId}`);
+};
+
+export const fetchTopCoinsForDominance = async () => {
+  const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1';
+  return genericFetchCoinGecko(url, "fetching top coins for dominance");
 };
