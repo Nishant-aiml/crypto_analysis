@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import Navigation from '@/components/Navigation';
 import TrendingCoins from '@/components/analytics/TrendingCoins';
@@ -12,6 +11,7 @@ import AnalyticsHeader from '@/components/analytics/AnalyticsHeader';
 import TopPerformers from '@/components/analytics/TopPerformers';
 import CorrelationVolatility from '@/components/analytics/CorrelationVolatility';
 import RiskAssessment from '@/components/analytics/RiskAssessment';
+import FutureOutlook from '@/components/analytics/FutureOutlook';
 
 const fetchAdvancedMarketData = async () => {
   const response = await fetch(
@@ -126,9 +126,9 @@ const Analytics = () => {
           <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Market Overview</h2>
           <div className="space-y-8">
             <TrendingCoins />
-            <MarketDominance /> {/* Removed marketData prop */}
+            <MarketDominance />
             <ExchangeAnalysis />
-            <VolumeAnalysis /> {/* Removed marketData prop */}
+            <VolumeAnalysis />
           </div>
         </section>
 
@@ -139,7 +139,7 @@ const Analytics = () => {
             <MarketCapVolumeRatio marketData={marketData} />
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {topCoinsForDetails.map(coin => (
+              {topCoinsForDetails.map((coin: any) => (
                 <CoinDetailStats 
                   key={coin.id}
                   coinId={coin.id} 
@@ -160,9 +160,23 @@ const Analytics = () => {
           </div>
         </section>
         
-        <TopPerformers topGainers={topGainers} topLosers={topLosers} />
-        <CorrelationVolatility correlationData={correlationData} volatilityData={volatilityData} />
-        <RiskAssessment riskData={riskAssessmentData} />
+        {/* Phase 3: Advanced Metrics & Risk Analysis */}
+        <section className="mb-10">
+          <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Advanced Metrics & Risk Analysis</h2>
+          <div className="space-y-8">
+            <TopPerformers topGainers={topGainers} topLosers={topLosers} />
+            <CorrelationVolatility correlationData={correlationData} volatilityData={volatilityData} />
+            <RiskAssessment riskData={riskAssessmentData} />
+          </div>
+        </section>
+
+        {/* Phase 4: Predictive Insights & Future Outlook */}
+        <section className="mb-10">
+          <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Predictive Insights & Future Outlook</h2>
+          <div className="space-y-8">
+            <FutureOutlook />
+          </div>
+        </section>
 
       </div>
     </div>
@@ -170,4 +184,3 @@ const Analytics = () => {
 };
 
 export default Analytics;
-
