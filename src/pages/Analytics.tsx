@@ -1,11 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, TrendingDown, Activity, AlertTriangle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Activity, AlertTriangle, Brain, BarChartHorizontal, Users, GitFork, Star, Droplets, Ratio as RatioIcon, Code2 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import TrendingCoins from '@/components/analytics/TrendingCoins';
 import ExchangeAnalysis from '@/components/analytics/ExchangeAnalysis';
 import MarketDominance from '@/components/analytics/MarketDominance';
 import VolumeAnalysis from '@/components/analytics/VolumeAnalysis';
+import CoinDetailStats from '@/components/analytics/CoinDetailStats';
+import CoinLiquidity from '@/components/analytics/CoinLiquidity';
+import MarketCapVolumeRatio from '@/components/analytics/MarketCapVolumeRatio';
 
 const fetchAdvancedMarketData = async () => {
   const response = await fetch(
@@ -21,12 +24,12 @@ const Analytics = () => {
     refetchInterval: 60000,
   });
 
-  if (isLoading) {
+  if (isLoading || !marketData) {
     return (
       <div className="min-h-screen bg-background p-8">
         <div className="max-w-7xl mx-auto">
           <Navigation />
-          <div className="text-center">Loading advanced analytics...</div>
+          <div className="text-center py-10">Loading advanced analytics...</div>
         </div>
       </div>
     );
@@ -34,7 +37,7 @@ const Analytics = () => {
 
   // Calculate correlation between Bitcoin and other coins
   const calculateCorrelation = (coin1Prices: number[], coin2Prices: number[]) => {
-    if (coin1Prices.length !== coin2Prices.length) return 0;
+    if (!coin1Prices || !coin2Prices || coin1Prices.length !== coin2Prices.length || coin1Prices.length === 0) return 0;
     
     const n = coin1Prices.length;
     const sum1 = coin1Prices.reduce((a, b) => a + b, 0);
@@ -59,7 +62,7 @@ const Analytics = () => {
 
   // Calculate volatility (standard deviation of 7-day prices)
   const calculateVolatility = (prices: number[]) => {
-    if (prices.length === 0) return 0;
+    if (!prices || prices.length === 0) return 0;
     const mean = prices.reduce((a, b) => a + b, 0) / prices.length;
     const variance = prices.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / prices.length;
     return Math.sqrt(variance) / mean * 100; // Coefficient of variation as percentage
@@ -72,35 +75,66 @@ const Analytics = () => {
   })) || [];
 
   // Top gainers and losers
-  const sortedByChange = marketData?.slice().sort((a: any, b: any) => b.price_change_percentage_24h - a.price_change_percentage_24h) || [];
+  const sortedByChange = [...marketData].sort((a: any, b: any) => (b.price_change_percentage_24h ?? -Infinity) - (a.price_change_percentage_24h ?? -Infinity));
   const topGainers = sortedByChange.slice(0, 5);
   const topLosers = sortedByChange.slice(-5).reverse();
 
+  const topCoinsForDetails = marketData.slice(0, 2); // e.g., Bitcoin and Ethereum
+
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <Navigation />
         
         <header className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Advanced Analytics</h1>
-          <p className="text-muted-foreground">Comprehensive market intelligence and analysis</p>
+          <h1 className="text-3xl font-bold mb-2 flex items-center">
+            <Brain className="w-8 h-8 mr-3 text-primary" />
+            Advanced Crypto Analytics
+          </h1>
+          <p className="text-muted-foreground">In-depth market intelligence, coin analysis, and predictive insights.</p>
         </header>
 
-        {/* New Advanced Features */}
-        <div className="space-y-8 mb-8">
-          {/* Trending Coins */}
-          <TrendingCoins />
+        {/* Phase 1 Features */}
+        <section className="mb-10">
+          <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Market Overview</h2>
+          <div className="space-y-8">
+            <TrendingCoins />
+            <MarketDominance marketData={marketData} />
+            <ExchangeAnalysis />
+            <VolumeAnalysis marketData={marketData} />
+          </div>
+        </section>
 
-          {/* Market Dominance */}
-          <MarketDominance />
-
-          {/* Exchange Analysis */}
-          <ExchangeAnalysis />
-
-          {/* Volume Analysis */}
-          <VolumeAnalysis />
-        </div>
-
+        {/* Phase 2: Deep Coin Analysis */}
+        <section className="mb-10">
+          <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Deep Coin Analysis</h2>
+          <div className="space-y-8">
+            <MarketCapVolumeRatio marketData={marketData} />
+            
+            {/* Coin Detail Stats for Top Coins */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {topCoinsForDetails.map(coin => (
+                <CoinDetailStats 
+                  key={coin.id}
+                  coinId={coin.id} 
+                  coinName={coin.name}
+                  coinSymbol={coin.symbol}
+                  coinImage={coin.image}
+                />
+              ))}
+            </div>
+            
+            {/* Coin Liquidity for Bitcoin */}
+            {marketData.find(c => c.id === 'bitcoin') && (
+              <CoinLiquidity 
+                coinId="bitcoin" 
+                coinName="Bitcoin"
+                coinSymbol="BTC"
+              />
+            )}
+          </div>
+        </section>
+        
         {/* Top Gainers and Losers */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <div className="glass-card p-6 rounded-lg">
@@ -119,8 +153,8 @@ const Analytics = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-medium">${coin.current_price.toFixed(2)}</div>
-                    <div className="text-green-400">+{coin.price_change_percentage_24h.toFixed(2)}%</div>
+                    <div className="font-medium">${coin.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: coin.current_price > 1 ? 2 : 6 })}</div>
+                    <div className="text-green-400">{(coin.price_change_percentage_24h ?? 0).toFixed(2)}%</div>
                   </div>
                 </div>
               ))}
@@ -143,8 +177,8 @@ const Analytics = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-medium">${coin.current_price.toFixed(2)}</div>
-                    <div className="text-red-400">{coin.price_change_percentage_24h.toFixed(2)}%</div>
+                    <div className="font-medium">${coin.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: coin.current_price > 1 ? 2 : 6 })}</div>
+                    <div className="text-red-400">{(coin.price_change_percentage_24h ?? 0).toFixed(2)}%</div>
                   </div>
                 </div>
               ))}
@@ -152,7 +186,7 @@ const Analytics = () => {
           </div>
         </div>
 
-        {/* Correlation Analysis */}
+        {/* Correlation Analysis & Volatility */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <div className="glass-card p-6 rounded-lg">
             <h2 className="text-xl font-semibold mb-4">Bitcoin Correlation Analysis</h2>
@@ -226,9 +260,9 @@ const Analytics = () => {
                     <span className="font-medium">{coin.symbol.toUpperCase()}</span>
                   </div>
                   <div className="text-sm space-y-1">
-                    <div>Price: ${coin.current_price.toFixed(2)}</div>
-                    <div>24h Change: <span className={coin.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400'}>
-                      {coin.price_change_percentage_24h.toFixed(2)}%
+                    <div>Price: ${coin.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: coin.current_price > 1 ? 2 : 6 })}</div>
+                    <div>24h Change: <span className={(coin.price_change_percentage_24h ?? 0) >= 0 ? 'text-green-400' : 'text-red-400'}>
+                      {(coin.price_change_percentage_24h ?? 0).toFixed(2)}%
                     </span></div>
                     <div>Risk Level: <span className={riskColor}>{riskLevel}</span></div>
                   </div>
