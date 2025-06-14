@@ -1,8 +1,6 @@
-
 import React from 'react';
 import MarketCapVolumeRatio from '@/components/analytics/MarketCapVolumeRatio';
-import CoinDetailStats from '@/components/analytics/CoinDetailStats';
-import CoinLiquidity from '@/components/analytics/CoinLiquidity';
+// CoinDetailStats and CoinLiquidity removed as per request
 import SocialMediaMomentum from '@/components/analytics/SocialMediaMomentum'; // Read-only
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { CoinData } from '@/types/crypto';
@@ -14,7 +12,6 @@ interface AnalyticsDataError {
 
 interface DeepCoinAnalysisSectionProps {
   marketData?: CoinData[];
-  topCoinsForDetails: CoinData[];
   isLoadingGlobal: boolean;
   errors: AnalyticsDataError; // Expecting the specific errors object
   marketDataUnavailable: boolean;
@@ -22,7 +19,6 @@ interface DeepCoinAnalysisSectionProps {
 
 const DeepCoinAnalysisSection: React.FC<DeepCoinAnalysisSectionProps> = ({
   marketData,
-  topCoinsForDetails,
   isLoadingGlobal,
   errors, // Use the specific errors object
   marketDataUnavailable,
@@ -48,39 +44,9 @@ const DeepCoinAnalysisSection: React.FC<DeepCoinAnalysisSectionProps> = ({
           <MarketCapVolumeRatio marketData={marketData || []} />
         </ErrorBoundary>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* If topCoinsForDetails is empty due to marketData error, this loop won't run.
-              Individual CoinDetailStats components handle their own fetch errors (now with toasts). */}
-          {topCoinsForDetails.map((coin: CoinData) => (
-            <ErrorBoundary key={coin.id} fallbackMessage={`Could not load details for ${coin.name}. Check toast notifications.`}>
-              <CoinDetailStats 
-                coinId={coin.id} 
-                coinName={coin.name}
-                coinSymbol={coin.symbol}
-                coinImage={coin.image}
-              />
-            </ErrorBoundary>
-          ))}
-          {topCoinsForDetails.length === 0 && !isLoadingGlobal && marketData && (
-            <p className="text-muted-foreground lg:col-span-2 text-center">No coin details to display (market data might be limited or empty).</p>
-          )}
-           {topCoinsForDetails.length === 0 && errors.marketDataError && (
-            <p className="text-red-400 lg:col-span-2 text-center">Could not load coin details due to market data error: {errors.marketDataError.message}</p>
-          )}
-        </div>
+        {/* CoinDetailStats for top coins has been removed as per request. */}
         
-        {/* CoinLiquidity for Bitcoin. It handles its own fetch errors (now with toasts). */}
-        {marketData?.find((c: CoinData) => c.id === 'bitcoin') ? ( // Only render if Bitcoin is in marketData
-          <ErrorBoundary fallbackMessage="Could not load Bitcoin Liquidity. Check toast notifications.">
-            <CoinLiquidity 
-              coinId="bitcoin" 
-              coinName="Bitcoin"
-              coinSymbol="BTC"
-            />
-          </ErrorBoundary>
-        ) : (
-          errors.marketDataError && <div className="text-sm text-muted-foreground">Bitcoin liquidity check skipped due to market data error.</div>
-        )}
+        {/* CoinLiquidity for Bitcoin has been removed as per request. */}
 
         <ErrorBoundary fallbackMessage="Could not load Social Media Momentum. (This component is read-only)">
           <SocialMediaMomentum />
@@ -91,4 +57,3 @@ const DeepCoinAnalysisSection: React.FC<DeepCoinAnalysisSectionProps> = ({
 };
 
 export default DeepCoinAnalysisSection;
-

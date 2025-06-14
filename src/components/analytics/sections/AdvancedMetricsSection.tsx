@@ -1,10 +1,7 @@
-
 import React from 'react';
 import TopPerformers from '@/components/analytics/TopPerformers';
 import CorrelationVolatility from '@/components/analytics/CorrelationVolatility';
 import RiskAssessment from '@/components/analytics/RiskAssessment';
-import WhaleWatch, { WhaleActivityCoin } from '@/components/analytics/WhaleWatch';
-import ArbitrageOpportunities from '@/components/analytics/ArbitrageOpportunities'; // Read-only
 import MarketCycleIndicator from '@/components/analytics/MarketCycleIndicator'; // Read-only
 import FutureOutlook from '@/components/analytics/FutureOutlook'; // Read-only
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -32,7 +29,6 @@ interface AdvancedMetricsSectionProps {
   topGainers: CoinData[];
   topLosers: CoinData[];
   riskAssessmentData: RiskAssessmentItem[];
-  potentialWhaleActivity?: WhaleActivityCoin[];
   isLoadingGlobal: boolean;
   errors: AnalyticsDataError; // Expecting the specific errors object
   marketDataUnavailable: boolean;
@@ -45,7 +41,6 @@ const AdvancedMetricsSection: React.FC<AdvancedMetricsSectionProps> = ({
   topGainers,
   topLosers,
   riskAssessmentData,
-  potentialWhaleActivity,
   isLoadingGlobal,
   errors, // Use the specific errors object
   marketDataUnavailable,
@@ -79,17 +74,7 @@ const AdvancedMetricsSection: React.FC<AdvancedMetricsSectionProps> = ({
         <ErrorBoundary fallbackMessage="Could not load Risk Assessment.">
           <RiskAssessment riskData={riskAssessmentData} />
         </ErrorBoundary>
-        <ErrorBoundary fallbackMessage="Could not load Whale Watch.">
-          <WhaleWatch 
-            potentialWhaleActivity={potentialWhaleActivity || []} 
-            // isLoading should reflect if potentialWhaleActivity is still being processed or if marketData is loading
-            isLoading={isLoadingGlobal && (!potentialWhaleActivity && !errors.marketDataError)}
-            error={errors.marketDataError} // Pass marketDataError as it's the source
-          />
-        </ErrorBoundary>
-        <ErrorBoundary fallbackMessage="Could not load Arbitrage Opportunities. (This component is read-only)">
-          <ArbitrageOpportunities />
-        </ErrorBoundary>
+        {/* WhaleWatch and ArbitrageOpportunities removed as per request */}
         <ErrorBoundary fallbackMessage="Could not load Market Cycle Indicator. (This component is read-only)">
           <MarketCycleIndicator />
         </ErrorBoundary>
@@ -102,4 +87,3 @@ const AdvancedMetricsSection: React.FC<AdvancedMetricsSectionProps> = ({
 };
 
 export default AdvancedMetricsSection;
-

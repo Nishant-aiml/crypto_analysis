@@ -4,7 +4,6 @@ import AnalyticsHeader from '@/components/analytics/AnalyticsHeader';
 import { useAnalyticsData } from '@/hooks/useAnalyticsData';
 import { calculateCorrelation, calculateVolatility } from '@/utils/analyticsUtils';
 import { CoinData } from '@/types/crypto';
-import { WhaleActivityCoin } from '@/components/analytics/WhaleWatch';
 import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -119,8 +118,6 @@ const Analytics = () => {
   const topGainers: CoinData[] = sortedByChange.slice(0, 5);
   const topLosers: CoinData[] = sortedByChange.slice(-5).reverse();
 
-  const topCoinsForDetails: CoinData[] = marketData ? marketData.slice(0, 2) : [];
-
   const riskAssessmentData: RiskAssessmentItem[] = marketData ? marketData.slice(0, 9).map((coin: CoinData) => {
     const volatility = calculateVolatility(coin.sparkline_in_7d?.price);
     const riskLevel = volatility > 15 ? 'High' : volatility > 8 ? 'Medium' : 'Low';
@@ -137,15 +134,6 @@ const Analytics = () => {
     };
   }) : [];
   
-  const potentialWhaleActivity: WhaleActivityCoin[] | undefined = marketData
-    ?.filter(coin => coin.market_cap > 0 ? (coin.total_volume / coin.market_cap) * 100 > 20 && coin.total_volume > 1000000 : false)
-    .map((coin: CoinData): WhaleActivityCoin => ({ 
-      ...coin, 
-      volume_to_market_cap_ratio: coin.market_cap > 0 ? (coin.total_volume / coin.market_cap) * 100 : 0
-    }))
-    .sort((a, b) => (b.volume_to_market_cap_ratio) - (a.volume_to_market_cap_ratio))
-    .slice(0, 10);
-
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
@@ -173,7 +161,6 @@ const Analytics = () => {
         <Suspense fallback={<SectionFallback title="Deep Coin Analysis" />}>
           <DeepCoinAnalysisSection
             marketData={marketData}
-            topCoinsForDetails={topCoinsForDetails}
             isLoadingGlobal={isLoading}
             errors={errors} // Pass the whole errors object
             marketDataUnavailable={marketDataUnavailable}
@@ -188,7 +175,6 @@ const Analytics = () => {
             topGainers={topGainers}
             topLosers={topLosers}
             riskAssessmentData={riskAssessmentData}
-            potentialWhaleActivity={potentialWhaleActivity}
             isLoadingGlobal={isLoading}
             errors={errors} // Pass the whole errors object
             marketDataUnavailable={marketDataUnavailable}
