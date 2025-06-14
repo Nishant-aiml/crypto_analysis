@@ -12,6 +12,8 @@ import TopPerformers from '@/components/analytics/TopPerformers';
 import CorrelationVolatility from '@/components/analytics/CorrelationVolatility';
 import RiskAssessment from '@/components/analytics/RiskAssessment';
 import FutureOutlook from '@/components/analytics/FutureOutlook';
+import CoinComparisonTool from '@/components/analytics/CoinComparisonTool';
+import MarketMoodRing from '@/components/analytics/MarketMoodRing';
 
 const fetchAdvancedMarketData = async () => {
   const response = await fetch(
@@ -175,6 +177,15 @@ const Analytics = () => {
           <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Predictive Insights & Future Outlook</h2>
           <div className="space-y-8">
             <FutureOutlook />
+          </div>
+        </section>
+
+        {/* Phase 5: Community & Gamification */}
+        <section className="mb-10">
+          <h2 className="text-2xl font-semibold mb-6 pb-2 border-b border-border">Phase 5: Community & Gamification</h2>
+          <div className="space-y-8">
+            <CoinComparisonTool />
+            <MarketMoodRing />
           </div>
         </section>
 
