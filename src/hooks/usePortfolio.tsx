@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, QueryKey } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -47,8 +48,27 @@ const genericFetchCoinGecko = async (url: string, errorMessagePrefix: string) =>
 
 const fetchCoinPrices = async (coinIds: string[]) => {
   if (coinIds.length === 0) return {};
-  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds.join(',')}&vs_currencies=usd&include_24hr_change=true&include_7d_change=true`;
-  return genericFetchCoinGecko(url, "fetching portfolio coin prices");
+  // Switched from /simple/price to /coins/markets as it seems more reliable and to avoid "Failed to fetch" errors.
+  const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${coinIds.join(',')}&price_change_percentage=7d`;
+  
+  const marketData = await genericFetchCoinGecko(url, "fetching portfolio coin prices");
+
+  if (!Array.isArray(marketData)) {
+    console.error("Expected array from /coins/markets, got:", marketData);
+    // Return empty object to prevent downstream errors
+    return {};
+  }
+  
+  const prices = marketData.reduce((acc, coin) => {
+    acc[coin.id] = {
+      usd: coin.current_price,
+      usd_24h_change: coin.price_change_percentage_24h,
+      usd_7d_change: coin.price_change_percentage_7d_in_currency,
+    };
+    return acc;
+  }, {} as Record<string, { usd: number; usd_24h_change?: number; usd_7d_change?: number }>);
+
+  return prices;
 };
 
 const fetchTopCoins = async () => {

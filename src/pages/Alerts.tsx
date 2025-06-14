@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, QueryKey } from '@tanstack/react-query';
 import { Plus, Trash2, Bell, TrendingUp, TrendingDown, AlertTriangle } from 'lucide-react';
@@ -57,8 +58,24 @@ const fetchTopCoinsForAlerts = async () => {
 
 const fetchCoinPricesForAlerts = async (coinIds: string[]) => {
   if (coinIds.length === 0) return {};
-  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${coinIds.join(',')}&vs_currencies=usd`;
-  return genericFetchCoinGeckoAlerts(url, "fetching coin prices for alerts");
+  // Switched from /simple/price to /coins/markets to avoid "Failed to fetch" errors.
+  const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${coinIds.join(',')}`;
+
+  const marketData = await genericFetchCoinGeckoAlerts(url, "fetching coin prices for alerts");
+
+  if (!Array.isArray(marketData)) {
+    console.error("Expected array from /coins/markets for alerts, got:", marketData);
+    return {};
+  }
+
+  const prices = marketData.reduce((acc, coin) => {
+    acc[coin.id] = {
+      usd: coin.current_price,
+    };
+    return acc;
+  }, {} as Record<string, { usd: number }>);
+
+  return prices;
 };
 
 const Alerts = () => {
