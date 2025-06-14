@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Scale } from 'lucide-react';
+import { Scale, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface CoinData {
@@ -27,23 +27,39 @@ const fetchCoinData = async (coinIds: string[]): Promise<CoinData[]> => {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      let errorText = `Failed to fetch coin data for comparison (IDs: ${coinIds.join(',')}) with status ${response.status}`;
-      try {
-        const errorData = await response.json();
-        errorText += `: ${JSON.stringify(errorData)}`;
-      } catch (e) {
-        errorText += ` and failed to parse error response body.`;
+      let errorText = `Failed to fetch coin data (IDs: ${coinIds.join(',')}), status: ${response.status}`;
+      if (response.status === 429) {
+        errorText = `API rate limit reached (429) when fetching coin data (IDs: ${coinIds.join(',')}). Please try again later.`;
+      } else {
+        try {
+          // Try to get more specific error details from the response body
+          const errorData = await response.json();
+          errorText += ` - Details: ${JSON.stringify(errorData)}`;
+        } catch (e) {
+          // If parsing JSON fails, try to get plain text
+          try {
+            const textData = await response.text();
+            if (textData) {
+              errorText += ` - Response: ${textData.substring(0, 100)}${textData.length > 100 ? '...' : ''}`;
+            } else {
+              errorText += ` (${response.statusText || 'Failed to parse error response body'})`;
+            }
+          } catch (textError) {
+             errorText += ` (${response.statusText || 'Failed to parse error response body and text fallback failed'})`;
+          }
+        }
       }
-      console.error(errorText, response);
+      console.error(`Error in fetchCoinData for ${url}: ${errorText}`, { status: response.status, statusText: response.statusText });
       throw new Error(errorText);
     }
     return response.json();
   } catch (error) {
-    console.error(`Network or other error fetching coin data for comparison from ${url}:`, error);
+    console.error(`Network or other error in fetchCoinData for ${url}:`, error);
     if (error instanceof Error) {
-      throw new Error(`Network error fetching coin data for comparison: ${error.message}`);
+      // Re-throw the original error if it's already specific, or wrap it
+      throw new Error(error.message || `A network error occurred while fetching coin data.`);
     }
-    throw new Error(`Network error fetching coin data for comparison: ${String(error)}`);
+    throw new Error(`An unknown error occurred while fetching coin data: ${String(error)}`);
   }
 };
 
@@ -56,7 +72,14 @@ const CoinComparisonTool: React.FC = () => {
     queryKey: ['compareCoins', submittedCoinIds],
     queryFn: () => fetchCoinData(submittedCoinIds),
     enabled: submittedCoinIds.length === 2 && submittedCoinIds.every(id => id.trim() !== ''),
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    retry: (failureCount, err) => {
+      // Do not retry on 429 or 404 errors immediately
+      if (err.message.includes("429") || err.message.includes("404")) {
+        return false;
+      }
+      return failureCount < 2; // Retry twice for other errors
+    }
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -89,6 +112,9 @@ const CoinComparisonTool: React.FC = () => {
   const coin1 = coinData?.find(c => c.id === submittedCoinIds[0]);
   const coin2 = coinData?.find(c => c.id === submittedCoinIds[1]);
 
+  const errorMessage = error ? (error as Error).message : "";
+  const isRateLimitError = errorMessage.includes("429") || errorMessage.toLowerCase().includes("rate limit");
+
   return (
     <Card className="glass-card">
       <CardHeader>
@@ -112,7 +138,25 @@ const CoinComparisonTool: React.FC = () => {
           </Button>
         </form>
 
-        {error && <div className="text-red-500 text-center py-4">Error: {(error as Error).message}. Please ensure IDs are correct or try again later.</div>}
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/30 text-destructive p-4 rounded-md text-center">
+            <div className="flex items-center justify-center mb-2">
+              <AlertTriangle className="w-5 h-5 mr-2" />
+              <span className="font-semibold">Error Fetching Data</span>
+            </div>
+            <p className="text-sm">{errorMessage}</p>
+            {isRateLimitError && (
+              <p className="text-xs mt-1">
+                This may be due to API rate limits. Please wait a moment and try again.
+              </p>
+            )}
+            {!isRateLimitError && (
+              <p className="text-xs mt-1">
+                Please ensure the coin IDs are correct or try again later.
+              </p>
+            )}
+          </div>
+        )}
         
         {!isLoading && !error && coinData && coin1 && coin2 && (
           <div className="space-y-4">
